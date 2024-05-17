@@ -1,0 +1,17 @@
+{
+  "name": "short",
+  "version": "1.0.0",
+  "main": "tailwind.config.js",
+  "scripts": {
+    "watch:styles": "npm run build:styles -- --watch",
+    "build": "npm run build:styles",
+    "build:styles": "tailwindcss -i ./styles/main.css -o ./assets/styles.css"
+  },
+  "keywords": [],
+  "author": "Victor N",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "tailwindcss": "^3.4.3"
+  }
+}
