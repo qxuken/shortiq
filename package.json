@@ -5,7 +5,7 @@
   "scripts": {
     "watch:styles": "npm run build:styles -- --watch",
     "build": "npm run build:styles",
-    "build:styles": "tailwindcss -i ./styles/main.css -o ./assets/styles.css"
+    "build:styles": "tailwindcss -i ./web/styles/main.css -o ./assets/styles.css"
   },
   "keywords": [],
   "author": "Victor N",

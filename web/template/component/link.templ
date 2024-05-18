@@ -1,0 +1,24 @@
+package component
+
+templ Input(id string, name string, title string, value string) {
+	<div>
+		<label for={ id }>{ title }</label>
+		<input
+			id={ id }
+			type="text"
+			name={ name }
+			if value != "" { value={ value } }
+		/>
+		{ children... }
+	</div>
+}
+
+templ CreateLink() {
+	<form id="create-link" hx-post="/" hx-swap="afterend">
+		<fieldset>
+			<legend>Create new short</legend>
+			@Input("url", "url", "Enter target url", "")
+			@Input("short", "short", "Modify handle or leave it be", "")
+		</fieldset>
+	</form>
+}
