@@ -14,20 +14,20 @@ const (
 	CREATE UNIQUE INDEX IF NOT EXISTS idx_link_short ON link(short);
 	`
 	getLink = "SELECT url FROM link WHERE short = ? LIMIT 1;"
-	setLink = "INSERT INTO link (short, url) VALUES (?, ?)"
+	setLink = "INSERT INTO link (url, short) VALUES (?, ?)"
 )
 
 type SqliteDB struct {
 	db *sqlx.DB
 }
 
-func (db *SqliteDB) GetLink(alias string) (url string, err error) {
-	err = db.db.Get(&url, getLink, alias)
+func (db *SqliteDB) GetLink(short string) (url string, err error) {
+	err = db.db.Get(&url, getLink, short)
 	return
 }
 
-func (db *SqliteDB) SetLink(alias, url string) (int64, error) {
-	res, err := db.db.Exec(setLink, alias, url)
+func (db *SqliteDB) SetLink(url, short string) (int64, error) {
+	res, err := db.db.Exec(setLink, url, short)
 	if err != nil {
 		return 0, err
 	}

@@ -1,24 +1,91 @@
 package component
 
-templ Input(id string, name string, title string, value string) {
+templ TargetUrlInput(value string) {
 	<div>
-		<label for={ id }>{ title }</label>
+		<label>Target url</label>
 		<input
-			id={ id }
+			id="url"
+			name="url"
 			type="text"
-			name={ name }
+			placeholder="Enter target url"
+			class="input input-bordered w-full max-w-xs"
 			if value != "" { value={ value } }
 		/>
-		{ children... }
 	</div>
 }
 
-templ CreateLink() {
-	<form id="create-link" hx-post="/" hx-swap="afterend">
+templ ShortUrlInput(value string) {
+	<div id="short-url">
+		<label>Short url handle</label>
+		<input
+			id="short"
+			name="short"
+			type="text"
+			placeholder="Enter handle for short url"
+			class="input input-bordered w-full max-w-xs"
+			if value != "" { value={ value } }
+		/>
+		<button
+			hx-get="/f/short"
+			hx-target="closest #short-url"
+			hx-swap="outerHTML"
+			hx-include="previous #create-link #url"
+		>
+			Use auto generated
+		</button>
+	</div>
+}
+
+templ ExampleUrl(baseUrl, url string) {
+	<div
+		id="example-url"
+		hx-get="/f/short"
+		hx-trigger="keyup changed delay:500ms from:#url"
+		hx-swap="outerHTML"
+		hx-include="previous #create-link #url"
+	>
+		<div>URL: { baseUrl }/u/{ url }</div>
+		<div>This could be different after creation</div>
+		<button hx-get="/f/custom" hx-target="closest #example-url">Use custom</button>
+	</div>
+}
+
+templ CreateLink(baseUrl, url, short string) {
+	<form id="create-link" hx-post="/" hx-swap="outerHTML">
 		<fieldset>
-			<legend>Create new short</legend>
-			@Input("url", "url", "Enter target url", "")
-			@Input("short", "short", "Modify handle or leave it be", "")
+			<legend>Create new short link</legend>
+			@TargetUrlInput(url)
+			@ExampleUrl(baseUrl, short)
+			<div>
+				<input type="submit" />
+			</div>
 		</fieldset>
 	</form>
+}
+
+script Copy(url templ.SafeURL) {
+	navigator.permissions.query({ name: "clipboard-write" }).then((result) => {
+	  if (result.state === "granted" || result.state === "prompt") {
+		navigator.clipboard.writeText(url)
+	  }
+	})
+}
+
+templ SuccessfullyCreated(short templ.SafeURL) {
+	<div id="short-success">
+		<h2>Link is ready</h2>
+		<div>
+			<a href={ short } target="_blank">{ string(short) }</a>
+			<button onclick={ Copy(short) }>Copy to clipboard</button>
+		</div>
+		<div>
+			<a
+				href="/"
+				hx-target="closest #short-success"
+				hx-swap="outerHTML"
+			>
+				Create another
+			</a>
+		</div>
+	</div>
 }

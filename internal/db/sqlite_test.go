@@ -12,18 +12,18 @@ func createDB(t *testing.T) *SqliteDB {
 
 func TestSqlite3KVs(t *testing.T) {
 	db := createDB(t)
-	kvs := [][2]string{{"testkey1", "testval1"}, {"UpercaseKey", "UpercaseVal"}}
+	kvs := [][2]string{{"testurl", "testshort"}, {"UpercaseUrl", "UpercaseSHORT"}}
 
 	for _, kv := range kvs {
 		_, err := db.SetLink(kv[0], kv[1])
 		if err != nil {
 			t.Fatal(err)
 		}
-		v, err := db.GetLink(kv[0])
+		v, err := db.GetLink(kv[1])
 		if err != nil {
 			t.Fatal(err)
 		}
-		if v != kv[1] {
+		if v != kv[0] {
 			t.Fatalf("Value missmatch for %s, expected %s but found %s", kv[0], kv[1], v)
 		}
 	}

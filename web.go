@@ -20,7 +20,6 @@ func main() {
 	conf := internal.LoadConfig()
 	if conf.Debug {
 		log.Println("Application runnin in development mode")
-		log.Printf("Config: %v\n", conf)
 	}
 
 	db, err := db.ConnectSqlite3("./tmp/db.db?mode=rwc")
@@ -34,7 +33,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	r.Get("/u/{short}", internal.RedirectRoute(db))
-	r.Group(web.WebRouter(db, conf))
+	r.Group(web.WebRouter(db))
 
 	log.Printf("Listening on http://127.0.0.1:%v\n", conf.Port)
 

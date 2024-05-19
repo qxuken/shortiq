@@ -6,3 +6,5 @@
 **/*_templ.go
 /assets/styles.css
 
+# Envfile
+.env

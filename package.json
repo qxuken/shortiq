@@ -3,16 +3,14 @@
   "version": "1.0.0",
   "main": "tailwind.config.js",
   "scripts": {
-    "watch:styles": "npm run build:styles -- --watch",
-    "build": "npm run build:styles",
-    "build:styles": "tailwindcss -i ./web/styles/main.css -o ./assets/styles.css"
+    "build": "lightningcss --minify --bundle --targets '>= 0.25%' ./web/styles/main.css -o ./assets/styles.css"
   },
   "keywords": [],
   "author": "Victor N",
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "daisyui": "^4.11.1",
-    "tailwindcss": "^3.4.3"
+    "lightningcss": "^1.25.0",
+    "lightningcss-cli": "^1.25.0"
   }
 }

@@ -20,6 +20,6 @@ func RedirectRoute(db db.DB) func(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		}
-		http.Redirect(w, r, url, 301)
+		http.Redirect(w, r, url, 302)
 	}
 }

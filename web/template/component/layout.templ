@@ -1,18 +1,23 @@
 package component
 
+script htmxSetup() {
+	htmx.logAll()
+}
+
 templ Layout(title string) {
 	<!DOCTYPE html />
 	<html lang="en">
 		<head>
 			<meta charset="utf-8" />
+			<!-- <meta name="htmx-config" content='{"defaultSwapStyle":"outerHTML"}'> -->
 			<meta name="viewport" content="width=device-width, initial-scale=1" />
 			<title>{ title }</title>
 			<link rel="stylesheet" href="/assets/styles.css" />
 		</head>
-		<body class="bg-white dark:bg-black">
+		<body hx-boost="true">
 			@MainHeading(title)
 			{ children... }
-			<script src="/assets/htmx.1.9.12.min.js"></script>
+			<script src="/assets/htmx.1.9.12.min.js" onload={ htmxSetup() } />
 		</body>
 	</html>
 }

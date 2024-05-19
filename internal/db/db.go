@@ -1,6 +1,6 @@
 package db
 
 type DB interface {
-	GetLink(alias string) (string, error)
-	SetLink(alias, url string) (int64, error)
+	GetLink(short string) (string, error)
+	SetLink(url, short string) (int64, error)
 }
