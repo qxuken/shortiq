@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "tailwind.config.js",
   "scripts": {
-    "build": "lightningcss --minify --bundle --targets '>= 0.25%' ./web/styles/main.css -o ./assets/styles.css"
+    "build": "lightningcss --minify --bundle -o ./assets/styles.css ./web/styles/main.css"
   },
   "keywords": [],
   "author": "Victor N",
