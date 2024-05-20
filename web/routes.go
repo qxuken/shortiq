@@ -10,7 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/mitchellh/go-server-timing"
+	servertiming "github.com/mitchellh/go-server-timing"
 
 	"github.com/qxuken/short/internal"
 	"github.com/qxuken/short/internal/db"
@@ -47,7 +47,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 				return
 			}
 
-			templ.Handler(page.Index(conf.PublicUrl, exampleUrl, short)).ServeHTTP(w, r)
+			templ.Handler(page.Index(conf.Debug, conf.PublicUrl, exampleUrl, short)).ServeHTTP(w, r)
 		})
 
 		r.Post("/", func(w http.ResponseWriter, r *http.Request) {

@@ -4,7 +4,7 @@ script htmxSetup() {
 	htmx.logAll()
 }
 
-templ Layout(title string) {
+templ Layout(devMode bool, title string) {
 	<!DOCTYPE html />
 	<html lang="en">
 		<head>
@@ -17,7 +17,10 @@ templ Layout(title string) {
 		<body hx-boost="true">
 			@MainHeading(title)
 			{ children... }
-			<script src="/assets/htmx.1.9.12.min.js" onload={ htmxSetup() } />
+			<script
+				src="/assets/htmx.1.9.12.min.js"
+				if devMode { onload={ htmxSetup() } }
+			/>
 		</body>
 	</html>
 }

@@ -2,8 +2,8 @@ package page
 
 import "github.com/qxuken/short/web/template/component"
 
-templ Index(baseUrl, url, short string) {
-	@component.Layout("ShortiQ") {
+templ Index(devMode bool, baseUrl, url, short string) {
+	@component.Layout(devMode, "ShortiQ") {
 		@component.CreateLink(baseUrl, url, short)
 	}
 }
