@@ -38,13 +38,19 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 		FileServer(r, "/assets", filesDir)
 
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			timing := servertiming.FromContext(r.Context())
+
+			st := timing.NewMetric("short_url").Start()
+			short, _ := internal.ShortUrlChecked(db, exampleUrl)
+			st.Stop()
+
 			if r.Header.Get("Hx-Request") == "true" {
-				c := component.CreateLink(conf.PublicUrl, exampleUrl, exampleShort, "generated", "", "")
+				c := component.CreateLink(conf.PublicUrl, exampleUrl, short, "generated", "", "")
 				templ.Handler(c).ServeHTTP(w, r)
 				return
 			}
 
-			c := page.Index(conf.Debug, conf.PublicUrl, exampleUrl, exampleShort, "", "")
+			c := page.Index(conf.Debug, conf.PublicUrl, exampleUrl, short, "", "")
 			templ.Handler(c).ServeHTTP(w, r)
 		})
 
@@ -64,10 +70,8 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			ut.Stop()
 
 			st := timing.NewMetric("validating_short_url").Start()
-			var shortErr error
-			if shortType == "custom" {
-				shortErr = internal.ValidateShortHandle(db, short)
-			} else if urlErr == nil {
+			shortErr := internal.ValidateShortHandle(db, short)
+			if shortType != "custom" && urlErr == nil && shortErr != nil {
 				short, shortErr = internal.ShortUrlChecked(db, url)
 			}
 			st.Stop()
@@ -134,10 +138,21 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			r.ParseForm()
 			form := r.PostForm
 			url := form.Get("url")
+			short := form.Get("short")
+			shortType := form.Get("short_type")
 			et.Stop()
 
 			st := timing.NewMetric("short_url").Start()
-			short, err := internal.ShortUrlChecked(db, url)
+
+			var err error
+			if shortType == "custom" {
+				err = internal.ValidateShortHandle(db, short)
+				if err != nil {
+					short, err = internal.ShortUrlChecked(db, url)
+				}
+			} else {
+				short, err = internal.ShortUrlChecked(db, url)
+			}
 			st.Stop()
 
 			var errStr string

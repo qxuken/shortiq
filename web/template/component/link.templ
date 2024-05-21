@@ -32,10 +32,7 @@ templ ShortUrlInput(value, err string) {
 			hx-post="/f/custom"
 			if value != "" { value={ value } }
 		/>
-		<button
-			hx-post="/f/short"
-			hx-include="previous #create-link #url"
-		>
+		<button hx-post="/f/short">
 			Use auto generated
 		</button>
 		if err != "" {
@@ -54,12 +51,13 @@ templ ExampleUrl(baseUrl, url, err string) {
 	>
 		<input type="hidden" name="short_type" value="generated" />
 		<input type="hidden" id="short" name="short" value={ url } />
-		<div>URL: { baseUrl }/u/{ url }</div>
-		<div>Note: This could be different after creation</div>
 		if err != "" {
 			<div class="error">{ err }</div>
+		} else {
+			<div class="url">URL: { baseUrl }/u/{ url }</div>
+			<div class="note">Note: This could be different after creation</div>
 		}
-		<button hx-post="/f/custom" hx-include="previous #short">Use custom</button>
+		<button hx-post="/f/custom">Use custom</button>
 	</div>
 }
 
