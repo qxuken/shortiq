@@ -13,6 +13,7 @@ templ Layout(devMode bool, title string) {
 			<meta name="viewport" content="width=device-width, initial-scale=1" />
 			<title>{ title }</title>
 			<link rel="stylesheet" href="/assets/styles.css" />
+			<link rel="preload" href="/assets/inter/InterVariable.woff2" as="font" crossorigin="anonymous" />
 		</head>
 		<body hx-boost="true">
 			@MainHeading(title)
