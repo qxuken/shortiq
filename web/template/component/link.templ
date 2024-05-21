@@ -1,64 +1,78 @@
 package component
 
-import "github.com/qxuken/short/internal"
-
-templ TargetUrlInput(value string) {
-	<div>
-		<label>Target url</label>
+templ RedirectUrlInput(value, err string) {
+	<div hx-target="this" hx-swap="outerHTML">
+		<label for="url">Target url</label>
 		<input
 			id="url"
 			name="url"
 			type="text"
 			placeholder="Enter target url"
 			class="input input-bordered w-full max-w-xs"
-			pattern={ internal.UrlRegexStr }
+			hx-post="/f/url"
+
 			if value != "" { value={ value } }
 		/>
+		if err != "" {
+			<div class="error">{ err }</div>
+		}
 	</div>
 }
 
-templ ShortUrlInput(value string) {
-	<div id="short-url">
-		<label>Short url handle</label>
+templ ShortUrlInput(value, err string) {
+	<div hx-target="this" hx-swap="outerHTML">
+		<input type="hidden" name="short_type" value="custom" />
+		<label for="short">Short url handle</label>
 		<input
 			id="short"
 			name="short"
 			type="text"
 			placeholder="Enter handle for short url"
 			class="input input-bordered w-full max-w-xs"
+			hx-post="/f/custom"
 			if value != "" { value={ value } }
 		/>
 		<button
-			hx-get="/f/short"
-			hx-target="closest #short-url"
-			hx-swap="outerHTML"
+			hx-post="/f/short"
 			hx-include="previous #create-link #url"
 		>
 			Use auto generated
 		</button>
+		if err != "" {
+			<div class="error">{ err }</div>
+		}
 	</div>
 }
 
-templ ExampleUrl(baseUrl, url string) {
+templ ExampleUrl(baseUrl, url, err string) {
 	<div
 		id="example-url"
-		hx-get="/f/short"
+		hx-post="/f/short"
 		hx-trigger="keyup changed delay:500ms from:#url"
 		hx-swap="outerHTML"
-		hx-include="previous #create-link #url"
+		hx-target="this"
 	>
+		<input type="hidden" name="short_type" value="generated" />
+		<input type="hidden" id="short" name="short" value={ url } />
 		<div>URL: { baseUrl }/u/{ url }</div>
-		<div>This could be different after creation</div>
-		<button hx-get="/f/custom" hx-target="closest #example-url">Use custom</button>
+		<div>Note: This could be different after creation</div>
+		if err != "" {
+			<div class="error">{ err }</div>
+		}
+		<button hx-post="/f/custom" hx-include="previous #short">Use custom</button>
 	</div>
 }
 
-templ CreateLink(baseUrl, url, short string) {
+templ CreateLink(baseUrl, url, short, shortType, urlErr, shortErr string) {
 	<form id="create-link" hx-post="/" hx-swap="outerHTML">
 		<fieldset>
 			<legend>Create new short link</legend>
-			@TargetUrlInput(url)
-			@ExampleUrl(baseUrl, short)
+			@RedirectUrlInput(url, urlErr)
+			if shortType == "custom" {
+				@ShortUrlInput(short, shortErr)
+			} else {
+				@ExampleUrl(baseUrl, short, shortErr)
+			}
 			<div>
 				<input type="submit" />
 			</div>

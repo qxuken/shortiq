@@ -1,6 +1,8 @@
 package db
 
 import (
+	"github.com/hashicorp/golang-lru/v2"
+
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -18,25 +20,30 @@ const (
 )
 
 type SqliteDB struct {
-	db *sqlx.DB
+	db    *sqlx.DB
+	cache *lru.Cache[string, string]
 }
 
-func (db *SqliteDB) GetLink(short string) (url string, err error) {
-	err = db.db.Get(&url, getLink, short)
-	return
+func (db *SqliteDB) GetLink(short string) (string, error) {
+	cached, ok := db.cache.Get(short)
+	if ok {
+		return cached, nil
+	}
+
+	var url string
+	err := db.db.Get(&url, getLink, short)
+	if err != nil {
+		return "", err
+	}
+
+	db.cache.Add(short, url)
+
+	return url, nil
 }
 
-func (db *SqliteDB) SetLink(url, short string) (int64, error) {
-	res, err := db.db.Exec(setLink, url, short)
-	if err != nil {
-		return 0, err
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
+func (db *SqliteDB) SetLink(url, short string) error {
+	_, err := db.db.Exec(setLink, url, short)
+	return err
 }
 
 func ConnectSqlite3(path string) (*SqliteDB, error) {
@@ -46,5 +53,10 @@ func ConnectSqlite3(path string) (*SqliteDB, error) {
 	}
 	db.MustExec(schema)
 
-	return &SqliteDB{db}, nil
+	cache, err := lru.New[string, string](512)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SqliteDB{db, cache}, nil
 }

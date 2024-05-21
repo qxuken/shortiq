@@ -15,7 +15,7 @@ func TestSqlite3KVs(t *testing.T) {
 	kvs := [][2]string{{"testurl", "testshort"}, {"UpercaseUrl", "UpercaseSHORT"}}
 
 	for _, kv := range kvs {
-		_, err := db.SetLink(kv[0], kv[1])
+		err := db.SetLink(kv[0], kv[1])
 		if err != nil {
 			t.Fatal(err)
 		}

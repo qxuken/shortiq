@@ -10,6 +10,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/mitchellh/go-server-timing v1.0.1
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 )
 
 require (
