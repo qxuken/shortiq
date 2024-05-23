@@ -14,21 +14,23 @@ import (
 
 	"github.com/qxuken/short/internal"
 	"github.com/qxuken/short/internal/db"
+	"github.com/qxuken/short/internal/shortener"
+	"github.com/qxuken/short/internal/validator"
 	"github.com/qxuken/short/web/template/component"
 	"github.com/qxuken/short/web/template/page"
 )
 
 const exampleUrl = "https://github.com/qxuken"
 
-var exampleShort = internal.ShortUrl(exampleUrl)
+var exampleShort = shortener.ShortUrl(exampleUrl)
 
 func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 	return func(r chi.Router) {
 		r.Use(func(h http.Handler) http.Handler {
 			return servertiming.Middleware(h, nil)
 		})
-		r.Use(middleware.RequestID)
 		if conf.Debug {
+			r.Use(middleware.RequestID)
 			r.Use(middleware.Logger)
 		}
 		r.Use(middleware.Compress(3))
@@ -41,7 +43,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			timing := servertiming.FromContext(r.Context())
 
 			st := timing.NewMetric("short_url").Start()
-			short, _ := internal.ShortUrlChecked(db, exampleUrl)
+			short, _ := shortener.ShortUrlChecked(db, exampleUrl)
 			st.Stop()
 
 			if r.Header.Get("Hx-Request") == "true" {
@@ -51,6 +53,25 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			}
 
 			c := page.Index(conf.Debug, conf.PublicUrl, exampleUrl, short, "", "")
+			templ.Handler(c).ServeHTTP(w, r)
+		})
+
+		r.Get("/s/{short}", func(w http.ResponseWriter, r *http.Request) {
+			timing := servertiming.FromContext(r.Context())
+
+			st := timing.NewMetric("extract_url").Start()
+			short := r.PathValue("short")
+			st.Stop()
+
+			dt := timing.NewMetric("db").Start()
+			lvs, err := db.GetVisits(short)
+			if err != nil {
+				http.Error(w, http.StatusText(500), 500)
+			}
+			dt.Stop()
+
+			fullShort := conf.PublicUrl + "/u/" + short
+			c := page.Stats(conf.Debug, templ.SafeURL(fullShort), lvs)
 			templ.Handler(c).ServeHTTP(w, r)
 		})
 
@@ -66,13 +87,13 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			vt.Stop()
 
 			ut := timing.NewMetric("validating_url").Start()
-			urlErr := internal.ValidateRedirectUrl(url)
+			urlErr := validator.ValidateRedirectUrl(url)
 			ut.Stop()
 
 			st := timing.NewMetric("validating_short_url").Start()
-			shortErr := internal.ValidateShortHandle(db, short)
+			shortErr := validator.ValidateShortHandle(db, short)
 			if shortType != "custom" && urlErr == nil && shortErr != nil {
-				short, shortErr = internal.ShortUrlChecked(db, url)
+				short, shortErr = shortener.ShortUrlChecked(db, url)
 			}
 			st.Stop()
 
@@ -106,6 +127,8 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			}
 
 			fullShort := conf.PublicUrl + "/u/" + short
+			statsShort := "/s/" + short
+			w.Header().Add("HX-Push-Url", statsShort)
 			templ.Handler(component.SuccessfullyCreated(templ.SafeURL(fullShort))).ServeHTTP(w, r)
 		})
 
@@ -119,7 +142,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			et.Stop()
 
 			vt := timing.NewMetric("validate_values").Start()
-			err := internal.ValidateRedirectUrl(url)
+			err := validator.ValidateRedirectUrl(url)
 			var errStr string
 			if err != nil {
 				errStr = err.Error()
@@ -146,12 +169,12 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 
 			var err error
 			if shortType == "custom" {
-				err = internal.ValidateShortHandle(db, short)
+				err = validator.ValidateShortHandle(db, short)
 				if err != nil {
-					short, err = internal.ShortUrlChecked(db, url)
+					short, err = shortener.ShortUrlChecked(db, url)
 				}
 			} else {
-				short, err = internal.ShortUrlChecked(db, url)
+				short, err = shortener.ShortUrlChecked(db, url)
 			}
 			st.Stop()
 
@@ -175,7 +198,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			et.Stop()
 
 			vt := timing.NewMetric("validate_values").Start()
-			err := internal.ValidateShortHandle(db, short)
+			err := validator.ValidateShortHandle(db, short)
 			var errStr string
 			if err != nil {
 				errStr = err.Error()
@@ -190,7 +213,6 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 }
 
 func FileServer(r chi.Router, path string, root http.FileSystem) {
-
 	if strings.ContainsAny(path, "{}*") {
 		panic("FileServer does not permit any URL parameters.")
 	}
@@ -202,6 +224,8 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 	path += "*"
 
 	r.Get(path, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Vary", "Accept-Encoding")
+		w.Header().Set("Cache-Control", "public, max-age=7776000")
 		rctx := chi.RouteContext(r.Context())
 		pathPrefix := strings.TrimSuffix(rctx.RoutePattern(), "/*")
 		fs := http.StripPrefix(pathPrefix, http.FileServer(root))

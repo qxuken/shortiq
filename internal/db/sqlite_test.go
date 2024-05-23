@@ -1,9 +1,14 @@
-package db
+package db_test
 
-import "testing"
+import (
+	"slices"
+	"testing"
 
-func createDB(t *testing.T) *SqliteDB {
-	db, err := ConnectSqlite3(":memory:")
+	"github.com/qxuken/short/internal/db"
+)
+
+func createDB(t *testing.T) *db.SqliteDB {
+	db, err := db.ConnectSqlite3(":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,5 +39,23 @@ func TestSqlite3EmptyKey(t *testing.T) {
 	v, err := db.GetLink("empty")
 	if err == nil || v != "" {
 		t.Fatal("Found value where it shouldnt be")
+	}
+}
+
+func TestSqlite3LogVisit(t *testing.T) {
+	tv := []db.LinkVisit{{"c1", "o1", 1}, {"c2", "o2", 2}}
+	db := createDB(t)
+	for _, v := range tv {
+		err := db.LogVisit("s", v)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	r, err := db.GetVisits("s")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(tv, r) {
+		t.Fatalf("Value missmatch, got response (len = %v, val = %v)", len(r), r)
 	}
 }

@@ -1,4 +1,4 @@
-package internal
+package validator
 
 import (
 	"errors"
@@ -8,8 +8,7 @@ import (
 )
 
 const (
-	UrlRegexStr    = `https?:\/\/[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)`
-	UrlShortHandle = `^[-_a-zA-Z0-9]{5,256}$`
+	UrlRegexStr = `https?:\/\/[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)`
 )
 
 func ValidateRedirectUrl(url string) error {
@@ -29,13 +28,16 @@ func ValidateShortHandle(db db.DB, url string) error {
 		return errors.New("Handle must be at least 5 characters long")
 	}
 
-	if l > 256 {
-		return errors.New("Handle must be at max 256 characters long")
+	if l > 64 {
+		return errors.New("Handle must be at max 64 characters long")
 	}
 
-	urlRegex := regexp.MustCompile(UrlShortHandle)
-	if !urlRegex.MatchString(url) {
-		return errors.New("Must only contain numbers, letters or symbols: -,_")
+	for _, c := range url {
+		if c == '-' || c == '_' || (c >= '0' && c <= '9') || (c >= 'A' && c <= 'z') {
+			continue
+		}
+
+		return errors.New("Must only contain numbers, english letters or symbols: -,_")
 	}
 
 	_, err := db.GetLink(url)

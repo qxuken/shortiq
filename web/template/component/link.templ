@@ -1,5 +1,8 @@
 package component
 
+import "github.com/qxuken/short/internal/db"
+import "github.com/qxuken/short/internal/utils"
+
 templ RedirectUrlInput(value, err string) {
 	<div hx-target="this" hx-swap="outerHTML">
 		<label for="url">Target url</label>
@@ -87,20 +90,27 @@ script Copy(url templ.SafeURL) {
 }
 
 templ SuccessfullyCreated(short templ.SafeURL) {
-	<div id="short-success">
+	<div hx-target="this" hx-swap="outerHTML">
 		<h2>Link is ready</h2>
 		<div>
 			<a href={ short } target="_blank">{ string(short) }</a>
 			<button onclick={ Copy(short) }>Copy to clipboard</button>
 		</div>
+		<div><a href="/">Create another</a></div>
+	</div>
+}
+
+templ LinkStats(short templ.SafeURL, data []db.LinkVisit)  {
+	<div hx-target="this" hx-swap="outerHTML">
 		<div>
-			<a
-				href="/"
-				hx-target="closest #short-success"
-				hx-swap="outerHTML"
-			>
-				Create another
-			</a>
+			<a href={ short } target="_blank">{ string(short) }</a>
+			<button onclick={ Copy(short) }>Copy to clipboard</button>
 		</div>
+		<div><a href="/">Create another<go install golang.org/x/tools/gopls@latest/a></div>
+		<ul>
+			for _, v := range data {
+				<li>{v.Country}, {v.Origin}, {utils.DateFormat("", v.Ts)}</li>
+			}
+		</ul>
 	</div>
 }

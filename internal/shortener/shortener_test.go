@@ -1,10 +1,11 @@
-package internal
+package shortener_test
 
 import (
 	"log"
 	"testing"
 
 	"github.com/qxuken/short/internal/db"
+	"github.com/qxuken/short/internal/shortener"
 )
 
 func createDB(t *testing.T) *db.SqliteDB {
@@ -16,7 +17,7 @@ func createDB(t *testing.T) *db.SqliteDB {
 }
 
 func TestGeneratingUrls(t *testing.T) {
-	short1, short2 := ShortUrl("test1"), ShortUrl("test2")
+	short1, short2 := shortener.ShortUrl("test1"), shortener.ShortUrl("test2")
 	t.Logf("short1: %v\n", short1)
 	t.Logf("short2: %v\n", short2)
 	if short1 == short2 {
@@ -30,7 +31,7 @@ func TestGeneratingColissionFree(t *testing.T) {
 
 	for _, url := range urls {
 		t.Logf("url: %v\n", url)
-		short, err := ShortUrlChecked(db, url)
+		short, err := shortener.ShortUrlChecked(db, url)
 		t.Logf("short: %v\n", short)
 		db.SetLink(url, short)
 		t.Logf("err: %v\n", err)
