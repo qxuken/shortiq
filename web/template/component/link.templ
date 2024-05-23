@@ -1,7 +1,9 @@
 package component
 
-import "github.com/qxuken/short/internal/db"
-import "github.com/qxuken/short/internal/utils"
+import (
+	"github.com/qxuken/short/internal/utils"
+	"github.com/qxuken/short/internal/db"
+)
 
 templ RedirectUrlInput(value, err string) {
 	<div hx-target="this" hx-swap="outerHTML">
@@ -106,7 +108,7 @@ templ LinkStats(short templ.SafeURL, data []db.LinkVisit)  {
 			<a href={ short } target="_blank">{ string(short) }</a>
 			<button onclick={ Copy(short) }>Copy to clipboard</button>
 		</div>
-		<div><a href="/">Create another<go install golang.org/x/tools/gopls@latest/a></div>
+		<div><a href="/">Create another</a></div>
 		<ul>
 			for _, v := range data {
 				<li>{v.Country}, {v.Origin}, {utils.DateFormat("", v.Ts)}</li>
