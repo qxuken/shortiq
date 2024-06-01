@@ -34,3 +34,7 @@ body {
   padding: 0;
   background-color: var(--color-bg);
 }
+
+a {
+  text-decoration: none;
+}

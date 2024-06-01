@@ -1,5 +1,14 @@
 package component
 
+templ htmxScript(devMode bool) {
+	<script defer src="/assets/htmx.1.9.12.min.js"></script>
+	if devMode {
+		<script>
+			document.addEventListener('DOMContentLoaded', () => htmx.logAll());
+		</script>
+	}
+}
+
 templ htmlTemplate(devMode bool, title string) {
 	<!DOCTYPE html />
 	<html lang="en">
@@ -7,6 +16,7 @@ templ htmlTemplate(devMode bool, title string) {
 			<meta charset="utf-8"/>
 			<!-- <meta name="htmx-config" content='{"defaultSwapStyle":"outerHTML"}'> -->
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<meta name="description" content="Create a short link in a second"/>
 			<title>{ title }</title>
 			<link rel="stylesheet" href="/assets/styles.css"/>
 			<link rel="preload" href="/assets/jost/Jost-VariableFont.ttf" as="font" crossorigin="anonymous"/>
@@ -16,14 +26,4 @@ templ htmlTemplate(devMode bool, title string) {
 			@htmxScript(devMode)
 		</body>
 	</html>
-}
-
-script htmxSetup() {
-	htmx.logAll()
-}
-
-templ htmxScript(devMode bool) {
-	<script src="/assets/htmx.1.9.12.min.js" if devMode {
-	onload={ htmxSetup() }
-}></script>
 }
