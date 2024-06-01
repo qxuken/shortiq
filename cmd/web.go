@@ -19,7 +19,7 @@ func main() {
 	godotenv.Load()
 	conf := internal.LoadConfig()
 	if conf.Debug {
-		log.Println("Application runnin in development mode")
+		log.Println("Application running in development mode")
 		log.Printf("Config: %v\n", conf)
 	}
 

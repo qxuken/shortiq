@@ -1,11 +1,36 @@
-@import "./inter.css";
+@import "./font.css";
+@import "./layout.css";
+@import "./headings.css";
+@import "./input.css";
+@import "./button.css";
+@import "./form.css";
 
-:root { font-family: "Inter", sans-serif; }
+:root,
+input {
+  font-family: "Jost", sans-serif;
+  letter-spacing: 1;
+}
+
 @supports (font-variation-settings: normal) {
-  :root { font-family: "InterVariable", sans-serif; font-optical-sizing: auto; }
+
+  :root,
+  input {
+    font-optical-sizing: auto;
+    font-family: "JostVariable", sans-serif;
+  }
+}
+
+:root {
+  --color-base: #366994;
+  --color-bg: #F6F4E5;
+  --color-accent: #356A9C;
+  --color-text-fade: #D5D5D5;
+  --color-success: #A2C614;
+  --color-error: #E4481C;
 }
 
 body {
-	margin: 0;
-	padding: 0;
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg);
 }

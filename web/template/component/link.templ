@@ -5,95 +5,78 @@ import (
 	"github.com/qxuken/short/internal/db"
 )
 
-templ RedirectUrlInput(value, err string) {
-	<div hx-target="this" hx-swap="outerHTML">
-		<label for="url">Target url</label>
+templ RedirectUrlInput(err string) {
+	<div class="input-container" hx-target="this" hx-swap="outerHTML">
 		<input
-			id="url"
-			name="url"
+			id="redirect_url"
+			name="redirect_url"
 			type="text"
-			placeholder="Enter target url"
-			class="input input-bordered w-full max-w-xs"
-			hx-post="/f/url"
-
-			if value != "" { value={ value } }
+			placeholder="Past your long link here"
+			hx-post="/f/redirect_url"
+			hx-preserve
 		/>
 		if err != "" {
-			<div class="error">{ err }</div>
+			<div class="input-error">
+				@CrossIcon(22)
+				<span>{ err }</span>
+			</div>
 		}
 	</div>
 }
 
-templ ShortUrlInput(value, err string) {
-	<div hx-target="this" hx-swap="outerHTML">
-		<input type="hidden" name="short_type" value="custom" />
-		<label for="short">Short url handle</label>
+templ ShortUrlInput(err string) {
+	<div class="input-container" hx-target="this" hx-swap="outerHTML">
+		<input type="hidden" name="short_type" value="custom"/>
 		<input
-			id="short"
-			name="short"
+			id="short_url"
+			name="short_url"
 			type="text"
 			placeholder="Enter handle for short url"
-			class="input input-bordered w-full max-w-xs"
-			hx-post="/f/custom"
-			if value != "" { value={ value } }
+			hx-post="/f/short_url"
+			hx-preserve
 		/>
-		<button hx-post="/f/short">
-			Use auto generated
-		</button>
 		if err != "" {
-			<div class="error">{ err }</div>
-		}
-	</div>
-}
-
-templ ExampleUrl(baseUrl, url, err string) {
-	<div
-		id="example-url"
-		hx-post="/f/short"
-		hx-trigger="keyup changed delay:500ms from:#url"
-		hx-swap="outerHTML"
-		hx-target="this"
-	>
-		<input type="hidden" name="short_type" value="generated" />
-		<input type="hidden" id="short" name="short" value={ url } />
-		if err != "" {
-			<div class="error">{ err }</div>
-		} else {
-			<div class="url">URL: { baseUrl }/u/{ url }</div>
-			<div class="note">Note: This could be different after creation</div>
-		}
-		<button hx-post="/f/custom">Use custom</button>
-	</div>
-}
-
-templ CreateLink(baseUrl, url, short, shortType, urlErr, shortErr string) {
-	<form id="create-link" hx-post="/" hx-swap="outerHTML">
-		<fieldset>
-			<legend>Create new short link</legend>
-			@RedirectUrlInput(url, urlErr)
-			if shortType == "custom" {
-				@ShortUrlInput(short, shortErr)
-			} else {
-				@ExampleUrl(baseUrl, short, shortErr)
-			}
-			<div>
-				<input type="submit" />
+			<div class="input-error">
+				@CrossIcon(22)
+				<span>{ err }</span>
 			</div>
-		</fieldset>
+		}
+	</div>
+}
+
+templ LinkFormActions(shortType string) {
+	<div class="form-actions">
+		<button type="submit">SHORT IT</button>
+		<span>OR</span>
+		if shortType == "custom" {
+			<button hx-post="/f/generated" hx-target="#create-link">RETURN TO AUTO GENERATED</button>
+		} else {
+			<button hx-post="/f/custom" hx-target="#create-link">USE CUSTOM SHORT</button>
+		}
+	</div>
+}
+
+templ CreateLink(baseUrl, shortType, urlErr, shortErr string) {
+	<form id="create-link" class="shortiq-form" hx-post="/" hx-swap="outerHTML">
+		@RedirectUrlInput(urlErr)
+		if shortType == "custom" {
+			@ShortUrlInput(shortErr)
+		}
+		@LinkFormActions(shortType)
 	</form>
 }
 
 script Copy(url templ.SafeURL) {
 	navigator.permissions.query({ name: "clipboard-write" }).then((result) => {
-	  if (result.state === "granted" || result.state === "prompt") {
-		navigator.clipboard.writeText(url)
-	  }
+		if (result.state === "granted" || result.state === "prompt") {
+			navigator.clipboard.writeText(url)
+		}
 	})
 }
 
 templ SuccessfullyCreated(short templ.SafeURL) {
 	<div hx-target="this" hx-swap="outerHTML">
-		<h2>Link is ready</h2>
+		<h2>Your link is ready</h2>
 		<div>
 			<a href={ short } target="_blank">{ string(short) }</a>
 			<button onclick={ Copy(short) }>Copy to clipboard</button>
@@ -102,7 +85,7 @@ templ SuccessfullyCreated(short templ.SafeURL) {
 	</div>
 }
 
-templ LinkStats(short templ.SafeURL, data []db.LinkVisit)  {
+templ LinkStats(short templ.SafeURL, data []db.AnalyticsItem) {
 	<div hx-target="this" hx-swap="outerHTML">
 		<div>
 			<a href={ short } target="_blank">{ string(short) }</a>
@@ -111,7 +94,7 @@ templ LinkStats(short templ.SafeURL, data []db.LinkVisit)  {
 		<div><a href="/">Create another</a></div>
 		<ul>
 			for _, v := range data {
-				<li>{v.Country}, {v.Origin}, {utils.DateFormat("", v.Ts)}</li>
+				<li>{ v.Country }, { v.Referer }, { utils.DateFormat("", v.Ts) }</li>
 			}
 		</ul>
 	</div>

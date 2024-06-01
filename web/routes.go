@@ -20,10 +20,6 @@ import (
 	"github.com/qxuken/short/web/template/page"
 )
 
-const exampleUrl = "https://github.com/qxuken"
-
-var exampleShort = shortener.ShortUrl(exampleUrl)
-
 func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 	return func(r chi.Router) {
 		r.Use(func(h http.Handler) http.Handler {
@@ -32,46 +28,16 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 		if conf.Debug {
 			r.Use(middleware.RequestID)
 			r.Use(middleware.Logger)
+		} else {
+			r.Use(middleware.Compress(3))
 		}
-		r.Use(middleware.Compress(3))
 
 		workDir, _ := os.Getwd()
 		filesDir := http.Dir(filepath.Join(workDir, "./assets"))
 		FileServer(r, "/assets", filesDir)
 
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			timing := servertiming.FromContext(r.Context())
-
-			st := timing.NewMetric("short_url").Start()
-			short, _ := shortener.ShortUrlChecked(db, exampleUrl)
-			st.Stop()
-
-			if r.Header.Get("Hx-Request") == "true" {
-				c := component.CreateLink(conf.PublicUrl, exampleUrl, short, "generated", "", "")
-				templ.Handler(c).ServeHTTP(w, r)
-				return
-			}
-
-			c := page.Index(conf.Debug, conf.PublicUrl, exampleUrl, short, "", "")
-			templ.Handler(c).ServeHTTP(w, r)
-		})
-
-		r.Get("/s/{short}", func(w http.ResponseWriter, r *http.Request) {
-			timing := servertiming.FromContext(r.Context())
-
-			st := timing.NewMetric("extract_url").Start()
-			short := r.PathValue("short")
-			st.Stop()
-
-			dt := timing.NewMetric("db").Start()
-			lvs, err := db.GetVisits(short)
-			if err != nil {
-				http.Error(w, http.StatusText(500), 500)
-			}
-			dt.Stop()
-
-			fullShort := conf.PublicUrl + "/u/" + short
-			c := page.Stats(conf.Debug, templ.SafeURL(fullShort), lvs)
+			c := page.Index(conf.Debug, conf.PublicUrl, "", "")
 			templ.Handler(c).ServeHTTP(w, r)
 		})
 
@@ -81,8 +47,8 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			vt := timing.NewMetric("extracting_values").Start()
 			r.ParseForm()
 			form := r.PostForm
-			url := form.Get("url")
-			short := form.Get("short")
+			url := form.Get("redirect_url")
+			short := form.Get("short_url")
 			shortType := form.Get("short_type")
 			vt.Stop()
 
@@ -91,8 +57,10 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			ut.Stop()
 
 			st := timing.NewMetric("validating_short_url").Start()
-			shortErr := validator.ValidateShortHandle(db, short)
-			if shortType != "custom" && urlErr == nil && shortErr != nil {
+			var shortErr error
+			if shortType == "custom" {
+				shortErr = validator.ValidateShortHandle(db, short)
+			} else if urlErr == nil {
 				short, shortErr = shortener.ShortUrlChecked(db, url)
 			}
 			st.Stop()
@@ -112,7 +80,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 					shortErrStr = ""
 				}
 
-				c := component.CreateLink(conf.PublicUrl, url, short, shortType, urlErrStr, shortErrStr)
+				c := component.CreateLink(conf.PublicUrl, shortType, urlErrStr, shortErrStr)
 				templ.Handler(c).ServeHTTP(w, r)
 				return
 			}
@@ -132,13 +100,62 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			templ.Handler(component.SuccessfullyCreated(templ.SafeURL(fullShort))).ServeHTTP(w, r)
 		})
 
-		r.Post("/f/url", func(w http.ResponseWriter, r *http.Request) {
+		r.Post("/f/generated", func(w http.ResponseWriter, r *http.Request) {
+			timing := servertiming.FromContext(r.Context())
+
+			vt := timing.NewMetric("extracting_values").Start()
+			r.ParseForm()
+			form := r.PostForm
+			url := form.Get("redirect_url")
+			vt.Stop()
+
+			ut := timing.NewMetric("validating_url").Start()
+			urlErr := validator.ValidateRedirectUrl(url)
+			var urlErrStr string
+			if urlErr != nil {
+				urlErrStr = urlErr.Error()
+			} else {
+				urlErrStr = ""
+			}
+			ut.Stop()
+
+			c := component.CreateLink(conf.PublicUrl, "generated", urlErrStr, "")
+			templ.Handler(c).ServeHTTP(w, r)
+			return
+
+		})
+		r.Post("/f/custom", func(w http.ResponseWriter, r *http.Request) {
+			timing := servertiming.FromContext(r.Context())
+
+			vt := timing.NewMetric("extracting_values").Start()
+			r.ParseForm()
+			form := r.PostForm
+			url := form.Get("redirect_url")
+			vt.Stop()
+
+			ut := timing.NewMetric("validating_url").Start()
+			urlErr := validator.ValidateRedirectUrl(url)
+			var urlErrStr string
+			if urlErr != nil {
+				urlErrStr = urlErr.Error()
+			} else {
+				urlErrStr = ""
+			}
+			ut.Stop()
+
+			c := component.CreateLink(conf.PublicUrl, "custom", urlErrStr, "")
+			templ.Handler(c).ServeHTTP(w, r)
+			return
+
+		})
+
+		r.Post("/f/redirect_url", func(w http.ResponseWriter, r *http.Request) {
 			timing := servertiming.FromContext(r.Context())
 
 			et := timing.NewMetric("extracting_values").Start()
 			r.ParseForm()
 			form := r.PostForm
-			url := form.Get("url")
+			url := form.Get("redirect_url")
 			et.Stop()
 
 			vt := timing.NewMetric("validate_values").Start()
@@ -151,50 +168,16 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			}
 			vt.Stop()
 
-			templ.Handler(component.RedirectUrlInput(url, errStr)).ServeHTTP(w, r)
+			templ.Handler(component.RedirectUrlInput(errStr)).ServeHTTP(w, r)
 		})
 
-		r.Post("/f/short", func(w http.ResponseWriter, r *http.Request) {
-			timing := servertiming.FromContext(r.Context())
-
-			et := timing.NewMetric("extracting_url").Start()
-			r.ParseForm()
-			form := r.PostForm
-			url := form.Get("url")
-			short := form.Get("short")
-			shortType := form.Get("short_type")
-			et.Stop()
-
-			st := timing.NewMetric("short_url").Start()
-
-			var err error
-			if shortType == "custom" {
-				err = validator.ValidateShortHandle(db, short)
-				if err != nil {
-					short, err = shortener.ShortUrlChecked(db, url)
-				}
-			} else {
-				short, err = shortener.ShortUrlChecked(db, url)
-			}
-			st.Stop()
-
-			var errStr string
-			if err != nil {
-				errStr = err.Error()
-			} else {
-				errStr = ""
-			}
-
-			templ.Handler(component.ExampleUrl(conf.PublicUrl, short, errStr)).ServeHTTP(w, r)
-		})
-
-		r.Post("/f/custom", func(w http.ResponseWriter, r *http.Request) {
+		r.Post("/f/short_url", func(w http.ResponseWriter, r *http.Request) {
 			timing := servertiming.FromContext(r.Context())
 
 			et := timing.NewMetric("extracting_values").Start()
 			r.ParseForm()
 			form := r.PostForm
-			short := form.Get("short")
+			short := form.Get("short_url")
 			et.Stop()
 
 			vt := timing.NewMetric("validate_values").Start()
@@ -207,7 +190,26 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			}
 			vt.Stop()
 
-			templ.Handler(component.ShortUrlInput(short, errStr)).ServeHTTP(w, r)
+			templ.Handler(component.ShortUrlInput(errStr)).ServeHTTP(w, r)
+		})
+
+		r.Get("/s/{short_url}", func(w http.ResponseWriter, r *http.Request) {
+			timing := servertiming.FromContext(r.Context())
+
+			st := timing.NewMetric("extract_url").Start()
+			short := r.PathValue("short_url")
+			st.Stop()
+
+			dt := timing.NewMetric("db").Start()
+			lvs, err := db.GetLinkAnalytics(short)
+			if err != nil {
+				http.Error(w, http.StatusText(500), 500)
+			}
+			dt.Stop()
+
+			fullShort := conf.PublicUrl + "/u/" + short
+			c := page.Stats(conf.Debug, templ.SafeURL(fullShort), lvs)
+			templ.Handler(c).ServeHTTP(w, r)
 		})
 	}
 }

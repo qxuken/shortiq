@@ -3,8 +3,8 @@ package page
 import "github.com/qxuken/short/web/template/component"
 import "github.com/qxuken/short/internal/db"
 
-templ Stats(devMode bool, short templ.SafeURL, data []db.LinkVisit) {
-	@component.Layout(devMode, "ShortiQ") {
+templ Stats(devMode bool, short templ.SafeURL, data []db.AnalyticsItem) {
+	@component.DefaultLayout(devMode, "SHORTIQ") {
 		@component.LinkStats(short, data)
 	}
 }

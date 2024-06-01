@@ -1,0 +1,7 @@
+.default-layout {
+  padding: 7.75rem 1.5rem 1.5rem;
+  display: grid;
+  gap: 5.5rem;
+  grid-template-columns: minmax(min-content, 52rem);
+  justify-content: center;
+}

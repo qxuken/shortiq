@@ -1,0 +1,47 @@
+.input-container {
+  display: grid;
+  gap: 2rem;
+  grid-template:
+    "input" auto
+    "error" 2rem;
+
+  input {
+    grid-area: input;
+
+    padding: 1.5rem 1rem;
+    background: var(--color-bg);
+
+    border: 2px solid var(--color-accent);
+    border-radius: 2px;
+
+    font-size: 1.5rem;
+    font-weight: 500;
+
+    &::placeholder {
+      color: var(--color-text-fade);
+      font-size: 1.5rem;
+      font-weight: 500;
+    }
+  }
+
+  &:has(.input-error) input {
+    border-color: var(--color-error);
+
+    &::placeholder {
+      color: var(--color-error);
+    }
+  }
+
+  .input-error {
+    grid-area: error;
+
+    color: var(--color-error);
+    font-size: 1.5rem;
+    font-weight: 500;
+
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+  }
+}

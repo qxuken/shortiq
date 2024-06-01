@@ -1,0 +1,29 @@
+button {
+  --button-color: var(--color-base);
+  cursor: pointer;
+
+  background: var(--color-bg);
+
+  border: var(--button-color) solid 3px;
+  border-radius: 2px;
+
+  color: var(--button-color);
+  padding: 1.5rem 2rem;
+  font-size: 1.5rem;
+
+  transition: all 0.1s ease-out;
+
+  &[type="submit"] {
+    --button-color: var(--color-success);
+  }
+
+  &:is(:hover, :focus) {
+    background: var(--button-color);
+    color: var(--color-bg);
+  }
+
+}
+
+form:has(.input-error) button[type="submit"] {
+  --button-color: var(--color-error);
+}

@@ -1,0 +1,13 @@
+h1 {
+  --width: 0.125rem;
+  letter-spacing: 5;
+  color: var(--color-bg);
+  margin: 0;
+  text-align: center;
+  font-size: 4rem;
+  text-shadow:
+    calc(var(--width) * -1) calc(var(--width) * -1) 0 var(--color-base),
+    var(--width) calc(var(--width) * -1) 0 var(--color-base),
+    calc(var(--width) * -1) var(--width) 0 var(--color-base),
+    var(--width) var(--width) 0 var(--color-base);
+}

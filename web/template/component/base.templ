@@ -1,0 +1,29 @@
+package component
+
+templ htmlTemplate(devMode bool, title string) {
+	<!DOCTYPE html />
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<!-- <meta name="htmx-config" content='{"defaultSwapStyle":"outerHTML"}'> -->
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>{ title }</title>
+			<link rel="stylesheet" href="/assets/styles.css"/>
+			<link rel="preload" href="/assets/jost/Jost-VariableFont.ttf" as="font" crossorigin="anonymous"/>
+		</head>
+		<body hx-boost="true">
+			{ children... }
+			@htmxScript(devMode)
+		</body>
+	</html>
+}
+
+script htmxSetup() {
+	htmx.logAll()
+}
+
+templ htmxScript(devMode bool) {
+	<script src="/assets/htmx.1.9.12.min.js" if devMode {
+	onload={ htmxSetup() }
+}></script>
+}

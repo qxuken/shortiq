@@ -1,0 +1,29 @@
+.shortiq-form {
+  container-type: inline-size;
+  container-name: shortiq-form;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+
+  .form-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    justify-content: center;
+    align-items: center;
+
+    @container shortiq-form (min-width: 800px) {
+      & {
+        flex-direction: row;
+        gap: 4rem;
+      }
+    }
+
+
+    span {
+      font-size: 1.5rem;
+      color: var(--color-base);
+    }
+  }
+}

@@ -1,14 +1,15 @@
 package db
 
 type DB interface {
-	GetLink(short string) (string, error)
-	SetLink(url, short string) error
-	GetVisits(short string) ([]LinkVisit, error)
-	LogVisit(short string, v LinkVisit) error
+	GetLink(shortUrl string) (string, error)
+	SetLink(redirectUrl, shortUrl string) error
+	GetLinkAnalytics(shortUrl string) ([]AnalyticsItem, error)
+	LogVisit(shortUrl string, v AnalyticsItem) error
 }
 
-type LinkVisit struct {
+type AnalyticsItem struct {
 	Country string `db:"country"`
-	Origin  string `db:"origin"`
+	Referer string `db:"referer"`
+	Ip      string `db:"ip"`
 	Ts      int64  `db:"ts"`
 }

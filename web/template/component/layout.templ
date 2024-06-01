@@ -1,27 +1,12 @@
 package component
 
-script htmxSetup() {
-	htmx.logAll()
-}
-
-templ Layout(devMode bool, title string) {
-	<!DOCTYPE html />
-	<html lang="en">
-		<head>
-			<meta charset="utf-8" />
-			<!-- <meta name="htmx-config" content='{"defaultSwapStyle":"outerHTML"}'> -->
-			<meta name="viewport" content="width=device-width, initial-scale=1" />
-			<title>{ title }</title>
-			<link rel="stylesheet" href="/assets/styles.css" />
-			<link rel="preload" href="/assets/inter/InterVariable.woff2" as="font" crossorigin="anonymous" />
-		</head>
-		<body hx-boost="true">
-			@MainHeading(title)
+templ DefaultLayout(devMode bool, title string) {
+	@htmlTemplate(devMode, title) {
+		<div class="default-layout">
+			<a href="/">
+				@MainHeading(title)
+			</a>
 			{ children... }
-			<script
-				src="/assets/htmx.1.9.12.min.js"
-				if devMode { onload={ htmxSetup() } }
-			/>
-		</body>
-	</html>
+		</div>
+	}
 }

@@ -43,7 +43,7 @@ func TestSqlite3EmptyKey(t *testing.T) {
 }
 
 func TestSqlite3LogVisit(t *testing.T) {
-	tv := []db.LinkVisit{{"c1", "o1", 1}, {"c2", "o2", 2}}
+	tv := []db.AnalyticsItem{{"c1", "o1", "192.168.0.1", 1}, {"c2", "o2", "192.168.0.2", 2}}
 	db := createDB(t)
 	for _, v := range tv {
 		err := db.LogVisit("s", v)
@@ -51,7 +51,7 @@ func TestSqlite3LogVisit(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	r, err := db.GetVisits("s")
+	r, err := db.GetLinkAnalytics("s")
 	if err != nil {
 		t.Fatal(err)
 	}
