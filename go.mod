@@ -3,8 +3,8 @@ module github.com/qxuken/short
 go 1.22.3
 
 require (
-	github.com/a-h/templ v0.2.707
-	github.com/go-chi/chi/v5 v5.0.12
+	github.com/a-h/templ v0.2.747
+	github.com/go-chi/chi/v5 v5.1.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1

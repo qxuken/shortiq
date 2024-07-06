@@ -4,8 +4,8 @@ tmp_dir = "tmp"
 
 [build]
 args_bin = []
-bin = "./tmp/web.exe"
-cmd = "npm run build && templ generate && go build -o ./tmp/web.exe ./cmd/web.go"
+bin = "./tmp/short.exe"
+cmd = "npm run build && templ generate && go build -o ./tmp/short.exe ./short.go"
 delay = 1000
 exclude_dir = [".git", "node_modules", "assets", "tmp", "vendor", "testdata"]
 exclude_file = []

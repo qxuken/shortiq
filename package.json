@@ -10,7 +10,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "lightningcss": "^1.25.0",
-    "lightningcss-cli": "^1.25.0"
+    "lightningcss": "1.25.1",
+    "lightningcss-cli": "1.25.1"
   }
 }
