@@ -5,31 +5,33 @@ import (
 	"database/sql"
 	"encoding/base32"
 	"errors"
-	"hash/fnv"
 	"strings"
 
 	"github.com/qxuken/short/internal/db"
 )
 
-func shortUrl(url []byte, l int) string {
-	hasher := fnv.New64a()
-	hasher.Write(url)
+const (
+	RETRIES     int = 5
+	DEFAULT_LEN int = 5
+	MAX_LEN     int = 15
+)
 
-	hash := hasher.Sum(nil)[:l]
+func shortUrl(l int) string {
+	buf := make([]byte, l)
+	rand.Read(buf)
 
-	return strings.ToLower(base32.StdEncoding.EncodeToString(hash))
+	return strings.ToLower(base32.StdEncoding.EncodeToString(buf))
 
 }
 
-func ShortUrl(url string) string {
-	return shortUrl([]byte(url), 5)
+func ShortUrl() string {
+	return shortUrl(5)
 }
 
-func ShortUrlChecked(db db.DB, url string) (string, error) {
-	buf := []byte(url)
-	for l := range 5 {
-		for range 5 {
-			short := shortUrl(buf, 5+l)
+func ShortUrlChecked(db db.DB) (string, error) {
+	for l := DEFAULT_LEN; l <= MAX_LEN; l++ {
+		for r := 0; r < RETRIES; r++ {
+			short := shortUrl(l)
 			_, err := db.GetLink(short)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
@@ -37,8 +39,7 @@ func ShortUrlChecked(db db.DB, url string) (string, error) {
 				}
 				return "", nil
 			}
-			rand.Read(buf)
 		}
 	}
-	return "", errors.New("Cannot create unique handle for " + url)
+	return "", errors.New("Cannot create unique handle")
 }

@@ -20,7 +20,7 @@ func main() {
 	conf := internal.LoadConfig()
 	if conf.Debug {
 		log.Println("Application running in development mode")
-		log.Printf("Config: %v\n", conf)
+		log.Printf("Config: %+v\n", conf)
 	}
 
 	db, err := db.ConnectSqlite3("./tmp/db.db?mode=rwc")
@@ -37,6 +37,7 @@ func main() {
 	r.Group(web.WebRouter(db, conf))
 
 	log.Printf("Listening on http://127.0.0.1:%v\n", conf.Port)
+	log.Printf("Available at %v\n", conf.PublicUrlStr)
 
 	log.Fatal(http.ListenAndServe(":8080", r))
 }

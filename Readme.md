@@ -15,7 +15,7 @@ go install github.com/a-h/templ/cmd/templ@latest
 ```
 
 ```bash
-go install github.com/cosmtrek/air@latest
+go install github.com/air-verse/air@latest
 ```
 
 ```bash

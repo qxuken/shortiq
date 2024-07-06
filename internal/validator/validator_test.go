@@ -1,11 +1,25 @@
 package validator_test
 
 import (
+	"net/url"
 	"testing"
 
+	"github.com/qxuken/short/internal"
 	"github.com/qxuken/short/internal/db"
 	"github.com/qxuken/short/internal/validator"
 )
+
+const MOCK_URL_STR = "https://short.iq"
+
+var (
+	MOCK_URL, _ = url.Parse(MOCK_URL_STR)
+)
+
+func createConf() *internal.Config {
+	config := new(internal.Config)
+	config.PublicUrl = *MOCK_URL
+	return config
+}
 
 func createDB(t *testing.T) *db.SqliteDB {
 	db, err := db.ConnectSqlite3(":memory:")
@@ -16,32 +30,45 @@ func createDB(t *testing.T) *db.SqliteDB {
 }
 
 func TestSimpleValidRedirectUrl(t *testing.T) {
+	conf := createConf()
 	url := "https://github.com/qxuken"
-	res := validator.ValidateRedirectUrl(url)
+	res := validator.ValidateRedirectUrl(conf, url)
 	if res != nil {
 		t.Fatalf("Failed to validate %s", url)
 	}
 }
 
 func TestComplexValidRedirectUrl(t *testing.T) {
+	conf := createConf()
 	url := "https://github.com/qxuken/key-val?query=some+hey"
-	res := validator.ValidateRedirectUrl(url)
+	res := validator.ValidateRedirectUrl(conf, url)
 	if res != nil {
 		t.Fatalf("Failed to validate %s", url)
 	}
 }
 
 func TestProtocollesInvalidRedirectUrl(t *testing.T) {
+	conf := createConf()
 	url := "github.com/qxuken/key-val?query=some+hey"
-	res := validator.ValidateRedirectUrl(url)
+	res := validator.ValidateRedirectUrl(conf, url)
 	if res == nil {
 		t.Fatalf("Failed to validate %s", url)
 	}
 }
 
 func TestShortInvalidRedirectUrl(t *testing.T) {
+	conf := createConf()
 	url := "/qxuken"
-	res := validator.ValidateRedirectUrl(url)
+	res := validator.ValidateRedirectUrl(conf, url)
+	if res == nil {
+		t.Fatalf("Failed to validate %s", url)
+	}
+}
+
+func TestMatchingInvalidRedirectUrl(t *testing.T) {
+	conf := createConf()
+	url := MOCK_URL_STR + "/test"
+	res := validator.ValidateRedirectUrl(conf, url)
 	if res == nil {
 		t.Fatalf("Failed to validate %s", url)
 	}

@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -37,7 +38,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 		FileServer(r, "/assets", filesDir)
 
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			c := page.Index(conf.Debug, conf.PublicUrl, "", "")
+			c := page.Index(conf.Debug, conf.PublicUrlStr, "", "")
 			templ.Handler(c).ServeHTTP(w, r)
 		})
 
@@ -53,15 +54,15 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			vt.Stop()
 
 			ut := timing.NewMetric("validating_url").Start()
-			urlErr := validator.ValidateRedirectUrl(url)
+			urlErr := validator.ValidateRedirectUrl(conf, url)
 			ut.Stop()
 
-			st := timing.NewMetric("validating_short_url").Start()
+			st := timing.NewMetric("creating_or_validating_short_url").Start()
 			var shortErr error
 			if shortType == "custom" {
 				shortErr = validator.ValidateShortHandle(db, short)
 			} else if urlErr == nil {
-				short, shortErr = shortener.ShortUrlChecked(db, url)
+				short, shortErr = shortener.ShortUrlChecked(db)
 			}
 			st.Stop()
 
@@ -80,7 +81,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 					shortErrStr = ""
 				}
 
-				c := component.CreateLink(conf.PublicUrl, shortType, urlErrStr, shortErrStr)
+				c := component.CreateLink(conf.PublicUrlStr, shortType, urlErrStr, shortErrStr)
 				templ.Handler(c).ServeHTTP(w, r)
 				return
 			}
@@ -94,7 +95,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 				return
 			}
 
-			fullShort := conf.PublicUrl + "/u/" + short
+			fullShort := fmt.Sprintf("%v/u/%v", conf.PublicUrlStr, short)
 			statsShort := "/s/" + short
 			w.Header().Add("HX-Push-Url", statsShort)
 			templ.Handler(component.SuccessfullyCreated(templ.SafeURL(fullShort))).ServeHTTP(w, r)
@@ -110,7 +111,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			vt.Stop()
 
 			ut := timing.NewMetric("validating_url").Start()
-			urlErr := validator.ValidateRedirectUrl(url)
+			urlErr := validator.ValidateRedirectUrl(conf, url)
 			var urlErrStr string
 			if urlErr != nil {
 				urlErrStr = urlErr.Error()
@@ -119,7 +120,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			}
 			ut.Stop()
 
-			c := component.CreateLink(conf.PublicUrl, "generated", urlErrStr, "")
+			c := component.CreateLink(conf.PublicUrlStr, "generated", urlErrStr, "")
 			templ.Handler(c).ServeHTTP(w, r)
 			return
 
@@ -134,7 +135,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			vt.Stop()
 
 			ut := timing.NewMetric("validating_url").Start()
-			urlErr := validator.ValidateRedirectUrl(url)
+			urlErr := validator.ValidateRedirectUrl(conf, url)
 			var urlErrStr string
 			if urlErr != nil {
 				urlErrStr = urlErr.Error()
@@ -143,7 +144,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			}
 			ut.Stop()
 
-			c := component.CreateLink(conf.PublicUrl, "custom", urlErrStr, "")
+			c := component.CreateLink(conf.PublicUrlStr, "custom", urlErrStr, "")
 			templ.Handler(c).ServeHTTP(w, r)
 			return
 
@@ -159,7 +160,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			et.Stop()
 
 			vt := timing.NewMetric("validate_values").Start()
-			err := validator.ValidateRedirectUrl(url)
+			err := validator.ValidateRedirectUrl(conf, url)
 			var errStr string
 			if err != nil {
 				errStr = err.Error()
@@ -207,7 +208,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			}
 			dt.Stop()
 
-			fullShort := conf.PublicUrl + "/u/" + short
+			fullShort := fmt.Sprintf("%v/u/%v", conf.PublicUrlStr, short)
 			c := page.Stats(conf.Debug, templ.SafeURL(fullShort), lvs)
 			templ.Handler(c).ServeHTTP(w, r)
 		})

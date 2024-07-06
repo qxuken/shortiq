@@ -2,22 +2,23 @@ package validator
 
 import (
 	"errors"
-	"regexp"
+	netUrl "net/url"
 
+	"github.com/qxuken/short/internal"
 	"github.com/qxuken/short/internal/db"
 )
 
-const (
-	UrlRegexStr = `https?:\/\/[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)`
-)
-
-func ValidateRedirectUrl(url string) error {
-	if len(url) < 10 {
-		return errors.New("Must be at least 10 characters long")
-	}
-	urlRegex := regexp.MustCompile(UrlRegexStr)
-	if !urlRegex.MatchString(url) {
+func ValidateRedirectUrl(conf *internal.Config, url string) error {
+	u, err := netUrl.Parse(url)
+	switch {
+	case err != nil:
 		return errors.New("Must be url")
+	case u.Scheme == "":
+		return errors.New("Must contain valid scheme")
+	case u.Host == "":
+		return errors.New("Must contain valid host")
+	case u.Host == conf.PublicUrl.Host:
+		return errors.New("Cannot create short url onto itself")
 	}
 	return nil
 }

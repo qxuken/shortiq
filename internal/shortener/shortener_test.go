@@ -1,6 +1,7 @@
 package shortener_test
 
 import (
+	"fmt"
 	"log"
 	"testing"
 
@@ -17,21 +18,25 @@ func createDB(t *testing.T) *db.SqliteDB {
 }
 
 func TestGeneratingUrls(t *testing.T) {
-	short1, short2 := shortener.ShortUrl("test1"), shortener.ShortUrl("test2")
+	short1 := shortener.ShortUrl()
 	t.Logf("short1: %v\n", short1)
-	t.Logf("short2: %v\n", short2)
-	if short1 == short2 {
-		t.Fatalf("Function generated equivalent hash, %s", short1)
+	if short1 == "" {
+		t.Fatalf("Function did not generated hash")
 	}
 }
 
-func TestGeneratingColissionFree(t *testing.T) {
+func TestGeneratingCollisionFree(t *testing.T) {
 	db := createDB(t)
-	urls := []string{"test1", "test2", "test3", "test1", "aaa", "aaa"}
+	urls := make([]string, 10_000)
+	for i := 0; i < 5000; i++ {
+		testS := fmt.Sprintf("test %d", i)
+		urls[i] = testS
+		urls[i+5000] = testS
+	}
 
 	for _, url := range urls {
 		t.Logf("url: %v\n", url)
-		short, err := shortener.ShortUrlChecked(db, url)
+		short, err := shortener.ShortUrlChecked(db)
 		t.Logf("short: %v\n", short)
 		db.SetLink(url, short)
 		t.Logf("err: %v\n", err)
