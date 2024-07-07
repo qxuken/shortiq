@@ -46,12 +46,12 @@ templ ShortUrlInput(err string) {
 
 templ LinkFormActions(shortType string) {
 	<div class="form-actions">
-		<button type="submit">SHORT IT</button>
-		<span>OR</span>
+		<button class="button button-submit" type="submit">SHORT IT</button>
+		<span class="form-actions-separator">OR</span>
 		if shortType == "custom" {
-			<button hx-post="/f/generated" hx-target="#create-link">RETURN TO AUTO GENERATED</button>
+			<button class="button" hx-post="/f/generated" hx-target="#create-link">RETURN TO AUTO GENERATED</button>
 		} else {
-			<button hx-post="/f/custom" hx-target="#create-link">USE CUSTOM SHORT</button>
+			<button class="button" hx-post="/f/custom" hx-target="#create-link">USE CUSTOM SHORT</button>
 		}
 	</div>
 }
@@ -74,27 +74,25 @@ script Copy(url templ.SafeURL) {
 	})
 }
 
-templ SuccessfullyCreated(short templ.SafeURL) {
+templ LinkStats(short templ.SafeURL, data []db.AnalyticsItem, notification string) {
 	<div hx-target="this" hx-swap="outerHTML">
-		<h2>Your link is ready</h2>
+		if notification != "" {
+			<h2>{ notification }</h2>
+		}
 		<div>
 			<a href={ short } target="_blank">{ string(short) }</a>
-			<button onclick={ Copy(short) }>Copy to clipboard</button>
-		</div>
-		<div><a href="/">Create another</a></div>
-	</div>
-}
-
-templ LinkStats(short templ.SafeURL, data []db.AnalyticsItem) {
-	<div hx-target="this" hx-swap="outerHTML">
-		<div>
-			<a href={ short } target="_blank">{ string(short) }</a>
-			<button onclick={ Copy(short) }>Copy to clipboard</button>
+			<button class="icon-button" onclick={ Copy(short) }>
+				@CopyIcon(40)
+			</button>
 		</div>
 		<div><a href="/">Create another</a></div>
 		<ul>
-			for _, v := range data {
-				<li>{ v.Country }, { v.Referer }, { utils.DateFormat("", v.Ts) }</li>
+			if len(data) > 0 {
+				for _, v := range data {
+					<li>{ v.Country }, { v.Referer }, { utils.DateFormat("", v.Ts) }</li>
+				}
+			} else {
+				<h5>No redirects yet</h5>
 			}
 		</ul>
 	</div>

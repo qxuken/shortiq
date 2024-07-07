@@ -4,6 +4,7 @@
 @import "./input.css";
 @import "./button.css";
 @import "./form.css";
+@import "./link.css";
 
 :root,
 input {
@@ -12,7 +13,6 @@ input {
 }
 
 @supports (font-variation-settings: normal) {
-
   :root,
   input {
     font-optical-sizing: auto;
@@ -22,11 +22,11 @@ input {
 
 :root {
   --color-base: #366994;
-  --color-bg: #F6F4E5;
-  --color-accent: #356A9C;
-  --color-text-fade: #D5D5D5;
-  --color-success: #A2C614;
-  --color-error: #E4481C;
+  --color-bg: #f6f4e5;
+  --color-accent: #356a9c;
+  --color-text-fade: #d5d5d5;
+  --color-success: #a2c614;
+  --color-error: #e4481c;
 }
 
 body {

@@ -1,4 +1,4 @@
-button {
+.button {
   --button-color: var(--color-base);
   cursor: pointer;
 
@@ -13,7 +13,7 @@ button {
 
   transition: all 0.1s ease-out;
 
-  &[type="submit"] {
+  &.button-submit {
     --button-color: var(--color-success);
   }
 
@@ -21,9 +21,16 @@ button {
     background: var(--button-color);
     color: var(--color-bg);
   }
-
 }
 
-form:has(.input-error) button[type="submit"] {
+.icon-button {
+  cursor: pointer;
+  background: transparent;
+
+  border: none;
+  padding: 0;
+}
+
+.form:has(.input-error) .button.button-submit {
   --button-color: var(--color-error);
 }

@@ -15,6 +15,8 @@ func ValidateRedirectUrl(conf *internal.Config, url string) error {
 		return errors.New("Must be url")
 	case u.Scheme == "":
 		return errors.New("Must contain valid scheme")
+	case !(u.Scheme == "http" || u.Scheme == "https"):
+		return errors.New("Scheme must be either http or https")
 	case u.Host == "":
 		return errors.New("Must contain valid host")
 	case u.Host == conf.PublicUrl.Host:

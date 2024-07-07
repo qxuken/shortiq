@@ -14,14 +14,14 @@ import (
 	servertiming "github.com/mitchellh/go-server-timing"
 
 	"github.com/qxuken/short/internal"
-	"github.com/qxuken/short/internal/db"
+	dbModule "github.com/qxuken/short/internal/db"
 	"github.com/qxuken/short/internal/shortener"
 	"github.com/qxuken/short/internal/validator"
 	"github.com/qxuken/short/web/template/component"
 	"github.com/qxuken/short/web/template/page"
 )
 
-func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
+func WebRouter(db dbModule.DB, conf *internal.Config) func(chi.Router) {
 	return func(r chi.Router) {
 		r.Use(func(h http.Handler) http.Handler {
 			return servertiming.Middleware(h, nil)
@@ -98,7 +98,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			fullShort := fmt.Sprintf("%v/u/%v", conf.PublicUrlStr, short)
 			statsShort := "/s/" + short
 			w.Header().Add("HX-Push-Url", statsShort)
-			templ.Handler(component.SuccessfullyCreated(templ.SafeURL(fullShort))).ServeHTTP(w, r)
+			templ.Handler(component.LinkStats(templ.SafeURL(fullShort), []dbModule.AnalyticsItem{}, "Your link is ready")).ServeHTTP(w, r)
 		})
 
 		r.Post("/f/generated", func(w http.ResponseWriter, r *http.Request) {
@@ -209,7 +209,7 @@ func WebRouter(db db.DB, conf *internal.Config) func(chi.Router) {
 			dt.Stop()
 
 			fullShort := fmt.Sprintf("%v/u/%v", conf.PublicUrlStr, short)
-			c := page.Stats(conf.Debug, templ.SafeURL(fullShort), lvs)
+			c := page.Stats(conf.Debug, templ.SafeURL(fullShort), lvs, "")
 			templ.Handler(c).ServeHTTP(w, r)
 		})
 	}
