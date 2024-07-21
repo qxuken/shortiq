@@ -4,11 +4,11 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/qxuken/short/internal/db"
+	mdb "github.com/qxuken/short/internal/db"
 )
 
-func createDB(t *testing.T) *db.SqliteDB {
-	db, err := db.ConnectSqlite3(":memory:")
+func createDB(t *testing.T) *mdb.SqliteDB {
+	db, err := mdb.ConnectSqlite3(":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -17,20 +17,28 @@ func createDB(t *testing.T) *db.SqliteDB {
 
 func TestSqlite3KVs(t *testing.T) {
 	db := createDB(t)
-	kvs := [][2]string{{"testurl", "testshort"}, {"UpercaseUrl", "UpercaseSHORT"}}
+	kvs := []mdb.LinkItem{{"testurl", "testshort"}, {"UpercaseUrl", "UpercaseSHORT"}}
 
 	for _, kv := range kvs {
-		err := db.SetLink(kv[0], kv[1])
+		err := db.SetLink(kv.RedirectUrl, kv.ShortUrl)
 		if err != nil {
 			t.Fatal(err)
 		}
-		v, err := db.GetLink(kv[1])
+		v, err := db.GetLink(kv.ShortUrl)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if v != kv[0] {
-			t.Fatalf("Value missmatch for %s, expected %s but found %s", kv[0], kv[1], v)
+		if v != kv.RedirectUrl {
+			t.Fatalf("Value missmatch for %s, expected %s but found %s", kv.ShortUrl, kv.RedirectUrl, v)
 		}
+	}
+
+	r, err := db.GetLinks()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(kvs, r) {
+		t.Fatalf("Value missmatch, got response (len = %v, val = %v)", len(r), r)
 	}
 }
 
@@ -43,15 +51,15 @@ func TestSqlite3EmptyKey(t *testing.T) {
 }
 
 func TestSqlite3LogVisit(t *testing.T) {
-	tv := []db.AnalyticsItem{{"c1", "o1", "192.168.0.1", 1}, {"c2", "o2", "192.168.0.2", 2}}
+	tv := []mdb.AnalyticsItem{{"s", "c1", "o1", "192.168.0.1", 1}, {"s", "c2", "o2", "192.168.0.2", 2}, {"s2", "c3", "o3", "192.168.0.2", 3}}
 	db := createDB(t)
 	for _, v := range tv {
-		err := db.LogVisit("s", v)
+		err := db.LogVisit(v)
 		if err != nil {
 			t.Fatal(err)
 		}
 	}
-	r, err := db.GetLinkAnalytics("s")
+	r, err := db.GetLinkAnalytics()
 	if err != nil {
 		t.Fatal(err)
 	}

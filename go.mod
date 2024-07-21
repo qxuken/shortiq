@@ -5,6 +5,7 @@ go 1.22.3
 require (
 	github.com/a-h/templ v0.2.747
 	github.com/go-chi/chi/v5 v5.1.0
+	github.com/gocarina/gocsv v0.0.0-20240520201108-78e41c74b4b1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1

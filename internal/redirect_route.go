@@ -15,12 +15,16 @@ func logRedirect(db mdb.DB, r *http.Request) {
 	short := r.PathValue("short")
 	country := r.Header.Get("CF-IPCountry")
 	referer := r.Header.Get("Referer")
+	ip := r.Header.Get("CF-Connecting-IP")
+	if ip == "" {
+		ip = r.RemoteAddr
+	}
 	if referer == "" {
 		referer = r.Header.Get("Origin")
 	}
 	ts := time.Now().Unix()
 
-	db.LogVisit(short, mdb.AnalyticsItem{Country: country, Referer: referer, Ts: ts})
+	db.LogVisit(mdb.AnalyticsItem{ShortUrl: short, Country: country, Referer: referer, Ip: ip, Ts: ts})
 }
 
 func RedirectRoute(db mdb.DB) func(w http.ResponseWriter, r *http.Request) {

@@ -24,7 +24,8 @@ const (
 	`
 	getLink   = "SELECT redirect_url FROM link WHERE short_url = ? LIMIT 1;"
 	setLink   = "INSERT INTO link (redirect_url, short_url) VALUES (?, ?);"
-	getVisits = "SELECT country, referer, ip, ts FROM analytics WHERE short_url = ?;"
+	getLinks  = "SELECT redirect_url, short_url FROM link;"
+	getVisits = "SELECT short_url, country, referer, ip, ts FROM analytics;"
 	logVisit  = "INSERT INTO analytics (short_url, country, referer, ip, ts) VALUES (?, ?, ?, ?, ?);"
 )
 
@@ -53,13 +54,19 @@ func (db *SqliteDB) SetLink(redirectUrl, shortUrl string) error {
 	return err
 }
 
-func (db *SqliteDB) GetLinkAnalytics(shortUrl string) ([]AnalyticsItem, error) {
+func (db *SqliteDB) GetLinks() ([]LinkItem, error) {
+	links := []LinkItem{}
+	err := db.db.Select(&links, getLinks)
+	return links, err
+}
+
+func (db *SqliteDB) GetLinkAnalytics() ([]AnalyticsItem, error) {
 	visits := []AnalyticsItem{}
-	err := db.db.Select(&visits, getVisits, shortUrl)
+	err := db.db.Select(&visits, getVisits)
 	return visits, err
 }
 
-func (db *SqliteDB) LogVisit(shortUrl string, v AnalyticsItem) error {
-	_, err := db.db.Exec(logVisit, shortUrl, v.Country, v.Referer, v.Ip, v.Ts)
+func (db *SqliteDB) LogVisit(v AnalyticsItem) error {
+	_, err := db.db.Exec(logVisit, v.ShortUrl, v.Country, v.Referer, v.Ip, v.Ts)
 	return err
 }

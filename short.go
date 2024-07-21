@@ -38,6 +38,8 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	r.Get("/u/{short}", internal.RedirectRoute(db))
+	r.Get("/a/e/a", internal.ExportRedirectAnalyticsCsv(db))
+	r.Get("/a/e/u", internal.ExportRedirectLinksCsv(db))
 	r.Group(web.WebRouter(db, conf))
 
 	bind := fmt.Sprintf("%v:%v", conf.Bind, conf.Port)
