@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"path"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -23,7 +25,9 @@ func main() {
 		log.Printf("Config: %+v\n", conf)
 	}
 
-	db, err := db.ConnectSqlite3("./tmp/db.db?mode=rwc")
+	dbPath := path.Join(conf.DataPath, "main.db?mode=rwc")
+	log.Printf("Opeening db on %v\n", dbPath)
+	db, err := db.ConnectSqlite3(dbPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,8 +40,9 @@ func main() {
 	r.Get("/u/{short}", internal.RedirectRoute(db))
 	r.Group(web.WebRouter(db, conf))
 
-	log.Printf("Listening on http://127.0.0.1:%v\n", conf.Port)
+	bind := fmt.Sprintf("%v:%v", conf.Bind, conf.Port)
+	log.Printf("Listening on http://%v\n", bind)
 	log.Printf("Available at %v\n", conf.PublicUrlStr)
 
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Fatal(http.ListenAndServe(bind, r))
 }
