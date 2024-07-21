@@ -98,7 +98,7 @@ func WebRouter(db dbModule.DB, conf *internal.Config) func(chi.Router) {
 			fullShort := fmt.Sprintf("%v/u/%v", conf.PublicUrlStr, short)
 			statsShort := "/s/" + short
 			w.Header().Add("HX-Push-Url", statsShort)
-			templ.Handler(component.LinkStats(templ.SafeURL(fullShort), []dbModule.AnalyticsItem{}, "Your link is ready")).ServeHTTP(w, r)
+			templ.Handler(component.LinkStats(templ.SafeURL(fullShort), "Your link is ready")).ServeHTTP(w, r)
 		})
 
 		r.Post("/f/generated", func(w http.ResponseWriter, r *http.Request) {
@@ -201,15 +201,8 @@ func WebRouter(db dbModule.DB, conf *internal.Config) func(chi.Router) {
 			short := r.PathValue("short_url")
 			st.Stop()
 
-			dt := timing.NewMetric("db").Start()
-			lvs, err := db.GetLinkAnalytics(short)
-			if err != nil {
-				http.Error(w, http.StatusText(500), 500)
-			}
-			dt.Stop()
-
 			fullShort := fmt.Sprintf("%v/u/%v", conf.PublicUrlStr, short)
-			c := page.Stats(conf.Debug, templ.SafeURL(fullShort), lvs, "")
+			c := page.Stats(conf.Debug, templ.SafeURL(fullShort), "")
 			templ.Handler(c).ServeHTTP(w, r)
 		})
 	}

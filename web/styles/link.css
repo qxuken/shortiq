@@ -1,2 +1,21 @@
-.link-stats {
+.link-container {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+
+  .link-display {
+    display: inline-block;
+    background: var(--color-success);
+    border: var(--color-accent) 0.125rem solid;
+    border-radius: 0.25rem;
+
+    color: var(--color-white);
+    font-size: 2rem;
+    font-weight: 500;
+    text-decoration: none;
+    text-align: center;
+
+    padding-block: 1rem;
+    padding-inline: 2rem;
+  }
 }

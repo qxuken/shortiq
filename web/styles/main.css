@@ -5,6 +5,7 @@
 @import "./button.css";
 @import "./form.css";
 @import "./link.css";
+@import "./atoms.css";
 
 :root,
 input {
@@ -27,6 +28,7 @@ input {
   --color-text-fade: #d5d5d5;
   --color-success: #a2c614;
   --color-error: #e4481c;
+  --color-white: #ffffff;
 }
 
 body {

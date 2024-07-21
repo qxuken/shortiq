@@ -1,10 +1,5 @@
 package component
 
-import (
-	"github.com/qxuken/short/internal/utils"
-	"github.com/qxuken/short/internal/db"
-)
-
 templ RedirectUrlInput(err string) {
 	<div class="input-container" hx-target="this" hx-swap="outerHTML">
 		<input
@@ -66,34 +61,39 @@ templ CreateLink(baseUrl, shortType, urlErr, shortErr string) {
 	</form>
 }
 
-script Copy(url templ.SafeURL) {
-	navigator.permissions.query({ name: "clipboard-write" }).then((result) => {
-		if (result.state === "granted" || result.state === "prompt") {
-			navigator.clipboard.writeText(url)
-		}
-	})
+script Copy(url templ.SafeURL, id string) {
+	let el = document.getElementById(id);
+	navigator.clipboard.writeText(url)
+		.then(function() {
+			el.classList.add("success")
+			setTimeout(() => {
+				el.classList.remove("success")
+			}, 500);
+		})
+		.catch(function() {
+			el.classList.add("error")
+			setTimeout(() => {
+				el.classList.remove("error")
+			}, 1000);
+		})
 }
 
-templ LinkStats(short templ.SafeURL, data []db.AnalyticsItem, notification string) {
-	<div hx-target="this" hx-swap="outerHTML">
+templ LinkStats(short templ.SafeURL, notification string) {
+	<div>
 		if notification != "" {
-			<h2>{ notification }</h2>
+			<div class="text-center margin-block">
+				@SubHeading(notification)
+			</div>
 		}
-		<div>
-			<a href={ short } target="_blank">{ string(short) }</a>
-			<button class="icon-button" onclick={ Copy(short) }>
+		<div class="link-container">
+			<div class="link-display">{ string(short) }</div>
+			<button
+				id="copy-link"
+				class="icon-button"
+				onclick={ Copy(short, "copy-link") }
+			>
 				@CopyIcon(40)
 			</button>
 		</div>
-		<div><a href="/">Create another</a></div>
-		<ul>
-			if len(data) > 0 {
-				for _, v := range data {
-					<li>{ v.Country }, { v.Referer }, { utils.DateFormat("", v.Ts) }</li>
-				}
-			} else {
-				<h5>No redirects yet</h5>
-			}
-		</ul>
 	</div>
 }

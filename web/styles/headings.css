@@ -1,4 +1,4 @@
-h1 {
+.heading1 {
   --width: 0.125rem;
   letter-spacing: 5;
   color: var(--color-bg);
@@ -10,4 +10,11 @@ h1 {
     var(--width) calc(var(--width) * -1) 0 var(--color-base),
     calc(var(--width) * -1) var(--width) 0 var(--color-base),
     var(--width) var(--width) 0 var(--color-base);
+}
+
+.heading2 {
+  color: var(--color-base);
+  margin: 0;
+  text-align: center;
+  font-size: 2rem;
 }
