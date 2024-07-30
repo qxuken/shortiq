@@ -20,7 +20,7 @@ COPY . .
 RUN go install github.com/a-h/templ/cmd/templ@latest
 RUN templ generate
 
-RUN CGO_ENABLED=1 GOOS=linux go build -o /app/short_web
+RUN CGO_ENABLED=1 GOOS=linux go build -o /app/short_web ./cmd/short/main.go
 
 # ---
 

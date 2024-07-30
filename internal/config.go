@@ -10,7 +10,7 @@ import (
 
 type Config struct {
 	Debug        bool    `default:"false"`
-	DataPath     string  `envconfig:"DATA_PATH", default:"./tmp"`
+	DataPath     string  `envconfig:"DATA_PATH" default:"./tmp"`
 	Port         int     `default:"8080"`
 	Bind         net.IP  `default:"127.0.0.1"`
 	PublicUrl    url.URL `envconfig:"PUBLIC_URL" required:"true"`

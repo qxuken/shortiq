@@ -45,3 +45,22 @@ func TestGeneratingCollisionFree(t *testing.T) {
 		}
 	}
 }
+
+var table = []struct {
+	handleSize int
+}{
+	{5},
+	{6},
+	{7},
+	{8},
+}
+
+func BenchmarkUrlShortener(b *testing.B) {
+	for _, v := range table {
+		b.Run(fmt.Sprintf("handle_size_%d", v.handleSize), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				shortener.ShortUrlWithLen(v.handleSize)
+			}
+		})
+	}
+}

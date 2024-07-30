@@ -3,35 +3,47 @@ package shortener
 import (
 	"crypto/rand"
 	"database/sql"
-	"encoding/base32"
 	"errors"
+	"math/big"
 	"strings"
 
 	"github.com/qxuken/short/internal/db"
 )
 
 const (
-	RETRIES     int = 5
+	RETRIES     int = 4
 	DEFAULT_LEN int = 5
-	MAX_LEN     int = 15
+	MAX_LEN     int = 8
 )
 
-func shortUrl(l int) string {
-	buf := make([]byte, l)
-	rand.Read(buf)
+var (
+	ALPHABET           []byte  = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-")
+	ALPHABET_FULL_LEN  big.Int = *big.NewInt(int64(len(ALPHABET)))
+	ALPHABET_SHORT_LEN big.Int = *big.NewInt(int64(len(ALPHABET) - 2))
+)
 
-	return strings.ToLower(base32.StdEncoding.EncodeToString(buf))
+func ShortUrlWithLen(length int) string {
+	var res strings.Builder
+
+	for i := 1; i < length; i++ {
+		alphabetIndex, _ := rand.Int(rand.Reader, &ALPHABET_FULL_LEN)
+		res.WriteByte(ALPHABET[alphabetIndex.Int64()])
+	}
+	alphabetIndex, _ := rand.Int(rand.Reader, &ALPHABET_SHORT_LEN)
+	res.WriteByte(ALPHABET[alphabetIndex.Int64()])
+
+	return res.String()
 
 }
 
 func ShortUrl() string {
-	return shortUrl(5)
+	return ShortUrlWithLen(5)
 }
 
 func ShortUrlChecked(db db.DB) (string, error) {
 	for l := DEFAULT_LEN; l <= MAX_LEN; l++ {
 		for r := 0; r < RETRIES; r++ {
-			short := shortUrl(l)
+			short := ShortUrlWithLen(l)
 			_, err := db.GetLink(short)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
