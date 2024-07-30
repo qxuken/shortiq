@@ -1,4 +1,4 @@
-FROM node:lts-alpine as frontend-builder
+FROM node:lts-alpine AS frontend-builder
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ RUN npm run build
 
 # ---
 
-FROM golang:1.22-alpine as backend-builder
+FROM golang:1.22-alpine AS backend-builder
 
 WORKDIR /app
 
