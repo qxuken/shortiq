@@ -1,23 +1,35 @@
-FROM node:lts-alpine AS frontend-builder
+FROM node:lts-alpine AS frontend-base
+
+FROM frontend-base AS frontend-deps
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+
+RUN npm ci
+
+FROM frontend-base AS frontend-builder
 
 WORKDIR /app
 
 COPY . .
+COPY --from=frontend-deps /app/node_modules ./node_modules
 
-RUN npm ci
 RUN npm run build
 
 # ---
 
-FROM golang:1.22-alpine AS backend-builder
+FROM golang:1.22-alpine AS backend-base
+
+RUN apk add build-base
+RUN go install github.com/a-h/templ/cmd/templ@latest
+
+FROM backend-base AS backend-builder
 
 WORKDIR /app
 
-RUN apk add build-base
-
 COPY . .
 
-RUN go install github.com/a-h/templ/cmd/templ@latest
 RUN templ generate
 
 RUN CGO_ENABLED=1 GOOS=linux go build -o /app/short_web ./cmd/short/main.go
