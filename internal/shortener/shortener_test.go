@@ -18,7 +18,7 @@ func createDB(t *testing.T) *db.SqliteDB {
 }
 
 func TestGeneratingUrls(t *testing.T) {
-	short1 := shortener.ShortUrl()
+	short1 := shortener.ShortUrlWithLen(5)
 	t.Logf("short1: %v\n", short1)
 	if short1 == "" {
 		t.Fatalf("Function did not generated hash")
@@ -36,7 +36,7 @@ func TestGeneratingCollisionFree(t *testing.T) {
 
 	for _, url := range urls {
 		t.Logf("url: %v\n", url)
-		short, err := shortener.ShortUrlChecked(db)
+		short, err := shortener.ShortUrlChecked(db, 5)
 		t.Logf("short: %v\n", short)
 		db.SetLink(url, short)
 		t.Logf("err: %v\n", err)

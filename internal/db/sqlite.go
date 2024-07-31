@@ -7,6 +7,7 @@ import (
 
 const (
 	schema = `
+	PRAGMA journal_mode=WAL;
 	CREATE TABLE IF NOT EXISTS link (
 		redirect_url STRING,
 		short_url STRING

@@ -8,7 +8,10 @@ import (
 	"github.com/qxuken/short/internal/db"
 )
 
-func ValidateRedirectUrl(conf *internal.Config, url string) error {
+func ValidateRedirectUrl(conf *internal.Config, url string, touched bool) error {
+	if !touched && url == "" {
+		return nil
+	}
 	u, err := netUrl.Parse(url)
 	switch {
 	case err != nil:

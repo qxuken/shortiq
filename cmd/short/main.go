@@ -14,6 +14,7 @@ import (
 
 	"github.com/qxuken/short/internal"
 	"github.com/qxuken/short/internal/db"
+	"github.com/qxuken/short/internal/routes"
 	"github.com/qxuken/short/web"
 )
 
@@ -37,10 +38,10 @@ func main() {
 	r.Use(middleware.Timeout(60 * time.Second))
 	r.Use(middleware.Recoverer)
 
-	r.Get("/u/{short}", internal.RedirectRoute(db))
-	r.Get("/a/e/a", internal.ExportRedirectAnalyticsCsv(db))
-	r.Get("/a/e/u", internal.ExportRedirectLinksCsv(db))
-	r.Group(web.WebRouter(db, conf))
+	r.Get("/u/{short}", routes.RedirectRoute(db))
+	r.Route("/a/e", routes.ExportRouter(db))
+	r.Route("/api", routes.ApiRouter(conf, db))
+	r.Group(web.WebRouter(conf, db))
 
 	bind := fmt.Sprintf("%v:%v", conf.Bind, conf.Port)
 	log.Printf("Listening on http://%v\n", bind)

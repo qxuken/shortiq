@@ -11,9 +11,7 @@ import (
 )
 
 const (
-	RETRIES     int = 4
-	DEFAULT_LEN int = 5
-	MAX_LEN     int = 8
+	RETRIES int = 4
 )
 
 var (
@@ -36,21 +34,15 @@ func ShortUrlWithLen(length int) string {
 
 }
 
-func ShortUrl() string {
-	return ShortUrlWithLen(5)
-}
-
-func ShortUrlChecked(db db.DB) (string, error) {
-	for l := DEFAULT_LEN; l <= MAX_LEN; l++ {
-		for r := 0; r < RETRIES; r++ {
-			short := ShortUrlWithLen(l)
-			_, err := db.GetLink(short)
-			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					return short, nil
-				}
-				return "", nil
+func ShortUrlChecked(db db.DB, handleLen int) (string, error) {
+	for range RETRIES {
+		short := ShortUrlWithLen(handleLen)
+		_, err := db.GetLink(short)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return short, nil
 			}
+			return "", nil
 		}
 	}
 	return "", errors.New("Cannot create unique handle")

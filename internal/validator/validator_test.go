@@ -32,7 +32,7 @@ func createDB(t *testing.T) *db.SqliteDB {
 func TestSimpleValidRedirectUrl(t *testing.T) {
 	conf := createConf()
 	url := "https://github.com/qxuken"
-	res := validator.ValidateRedirectUrl(conf, url)
+	res := validator.ValidateRedirectUrl(conf, url, true)
 	if res != nil {
 		t.Fatalf("Failed to validate %s", url)
 	}
@@ -41,7 +41,7 @@ func TestSimpleValidRedirectUrl(t *testing.T) {
 func TestComplexValidRedirectUrl(t *testing.T) {
 	conf := createConf()
 	url := "https://github.com/qxuken/key-val?query=some+hey"
-	res := validator.ValidateRedirectUrl(conf, url)
+	res := validator.ValidateRedirectUrl(conf, url, true)
 	if res != nil {
 		t.Fatalf("Failed to validate %s", url)
 	}
@@ -50,7 +50,7 @@ func TestComplexValidRedirectUrl(t *testing.T) {
 func TestProtocollesInvalidRedirectUrl(t *testing.T) {
 	conf := createConf()
 	url := "github.com/qxuken/key-val?query=some+hey"
-	res := validator.ValidateRedirectUrl(conf, url)
+	res := validator.ValidateRedirectUrl(conf, url, true)
 	if res == nil {
 		t.Fatalf("Failed to validate %s", url)
 	}
@@ -59,7 +59,7 @@ func TestProtocollesInvalidRedirectUrl(t *testing.T) {
 func TestShortInvalidRedirectUrl(t *testing.T) {
 	conf := createConf()
 	url := "/qxuken"
-	res := validator.ValidateRedirectUrl(conf, url)
+	res := validator.ValidateRedirectUrl(conf, url, true)
 	if res == nil {
 		t.Fatalf("Failed to validate %s", url)
 	}
@@ -68,7 +68,7 @@ func TestShortInvalidRedirectUrl(t *testing.T) {
 func TestMatchingInvalidRedirectUrl(t *testing.T) {
 	conf := createConf()
 	url := MOCK_URL_STR + "/test"
-	res := validator.ValidateRedirectUrl(conf, url)
+	res := validator.ValidateRedirectUrl(conf, url, true)
 	if res == nil {
 		t.Fatalf("Failed to validate %s", url)
 	}

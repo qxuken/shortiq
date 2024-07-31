@@ -15,6 +15,7 @@ type Config struct {
 	Bind         net.IP  `default:"127.0.0.1"`
 	PublicUrl    url.URL `envconfig:"PUBLIC_URL" required:"true"`
 	PublicUrlStr string  `ignore:"true"`
+	HandleLen    int     `envconfig:"HANDLE_LEN" default:"5"`
 }
 
 func LoadConfig() *Config {

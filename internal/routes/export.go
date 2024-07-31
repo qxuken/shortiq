@@ -1,11 +1,19 @@
-package internal
+package routes
 
 import (
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/gocarina/gocsv"
 	mdb "github.com/qxuken/short/internal/db"
 )
+
+func ExportRouter(db mdb.DB) func(chi.Router) {
+	return func(r chi.Router) {
+		r.Get("/a", ExportRedirectAnalyticsCsv(db))
+		r.Get("/l", ExportRedirectLinksCsv(db))
+	}
+}
 
 func ExportRedirectAnalyticsCsv(db mdb.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {

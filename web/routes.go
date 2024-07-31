@@ -21,7 +21,7 @@ import (
 	"github.com/qxuken/short/web/template/page"
 )
 
-func WebRouter(db dbModule.DB, conf *internal.Config) func(chi.Router) {
+func WebRouter(conf *internal.Config, db dbModule.DB) func(chi.Router) {
 	return func(r chi.Router) {
 		r.Use(func(h http.Handler) http.Handler {
 			return servertiming.Middleware(h, nil)
@@ -37,10 +37,7 @@ func WebRouter(db dbModule.DB, conf *internal.Config) func(chi.Router) {
 		filesDir := http.Dir(filepath.Join(workDir, "./assets"))
 		FileServer(r, "/assets", filesDir)
 
-		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			c := page.Index(conf.Debug, conf.PublicUrlStr, "", "")
-			templ.Handler(c).ServeHTTP(w, r)
-		})
+		r.Get("/", templ.Handler(page.Index(conf.Debug, conf.PublicUrlStr, "", "")).ServeHTTP)
 
 		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
 			timing := servertiming.FromContext(r.Context())
@@ -54,7 +51,7 @@ func WebRouter(db dbModule.DB, conf *internal.Config) func(chi.Router) {
 			vt.Stop()
 
 			ut := timing.NewMetric("validating_url").Start()
-			urlErr := validator.ValidateRedirectUrl(conf, url)
+			urlErr := validator.ValidateRedirectUrl(conf, url, true)
 			ut.Stop()
 
 			st := timing.NewMetric("creating_or_validating_short_url").Start()
@@ -62,7 +59,7 @@ func WebRouter(db dbModule.DB, conf *internal.Config) func(chi.Router) {
 			if shortType == "custom" {
 				shortErr = validator.ValidateShortHandle(db, short)
 			} else if urlErr == nil {
-				short, shortErr = shortener.ShortUrlChecked(db)
+				short, shortErr = shortener.ShortUrlChecked(db, conf.HandleLen)
 			}
 			st.Stop()
 
@@ -111,7 +108,7 @@ func WebRouter(db dbModule.DB, conf *internal.Config) func(chi.Router) {
 			vt.Stop()
 
 			ut := timing.NewMetric("validating_url").Start()
-			urlErr := validator.ValidateRedirectUrl(conf, url)
+			urlErr := validator.ValidateRedirectUrl(conf, url, false)
 			var urlErrStr string
 			if urlErr != nil {
 				urlErrStr = urlErr.Error()
@@ -135,7 +132,7 @@ func WebRouter(db dbModule.DB, conf *internal.Config) func(chi.Router) {
 			vt.Stop()
 
 			ut := timing.NewMetric("validating_url").Start()
-			urlErr := validator.ValidateRedirectUrl(conf, url)
+			urlErr := validator.ValidateRedirectUrl(conf, url, false)
 			var urlErrStr string
 			if urlErr != nil {
 				urlErrStr = urlErr.Error()
@@ -160,7 +157,7 @@ func WebRouter(db dbModule.DB, conf *internal.Config) func(chi.Router) {
 			et.Stop()
 
 			vt := timing.NewMetric("validate_values").Start()
-			err := validator.ValidateRedirectUrl(conf, url)
+			err := validator.ValidateRedirectUrl(conf, url, true)
 			var errStr string
 			if err != nil {
 				errStr = err.Error()
