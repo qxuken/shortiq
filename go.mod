@@ -16,11 +16,16 @@ require (
 	github.com/mitchellh/go-server-timing v1.0.1
 )
 
-require github.com/ajg/form v1.5.1 // indirect
+require (
+	github.com/ajg/form v1.5.1 // indirect
+	golang.org/x/sys v0.22.0 // indirect
+)
 
 require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-chi/cors v1.2.1
 	github.com/go-chi/render v1.0.3
 	github.com/golang/gddo v0.0.0-20210115222349-20d68f94ee1f // indirect
+	github.com/matthewhartstonge/argon2 v1.0.0
+	golang.org/x/crypto v0.25.0 // indirect
 )
