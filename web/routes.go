@@ -13,7 +13,7 @@ import (
 
 	servertiming "github.com/mitchellh/go-server-timing"
 
-	"github.com/qxuken/short/internal"
+	"github.com/qxuken/short/internal/config"
 	dbModule "github.com/qxuken/short/internal/db"
 	"github.com/qxuken/short/internal/shortener"
 	"github.com/qxuken/short/internal/validator"
@@ -21,12 +21,12 @@ import (
 	"github.com/qxuken/short/web/template/page"
 )
 
-func WebRouter(conf *internal.Config, db dbModule.DB) func(chi.Router) {
+func WebRouter(conf *config.Config, db dbModule.DB) func(chi.Router) {
 	return func(r chi.Router) {
 		r.Use(func(h http.Handler) http.Handler {
 			return servertiming.Middleware(h, nil)
 		})
-		if conf.Debug {
+		if conf.Verbose {
 			r.Use(middleware.RequestID)
 			r.Use(middleware.Logger)
 		} else {
@@ -35,9 +35,9 @@ func WebRouter(conf *internal.Config, db dbModule.DB) func(chi.Router) {
 
 		workDir, _ := os.Getwd()
 		filesDir := http.Dir(filepath.Join(workDir, "./assets"))
-		FileServer(r, "/assets", filesDir)
+		fileServer(r, "/assets", filesDir)
 
-		r.Get("/", templ.Handler(page.Index(conf.Debug, conf.PublicUrlStr, "", "")).ServeHTTP)
+		r.Get("/", templ.Handler(page.Index(conf.Verbose, conf.PublicUrlStr, "", "")).ServeHTTP)
 
 		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
 			timing := servertiming.FromContext(r.Context())
@@ -199,13 +199,13 @@ func WebRouter(conf *internal.Config, db dbModule.DB) func(chi.Router) {
 			st.Stop()
 
 			fullShort := fmt.Sprintf("%v/u/%v", conf.PublicUrlStr, short)
-			c := page.Stats(conf.Debug, templ.SafeURL(fullShort), "")
+			c := page.Stats(conf.Verbose, templ.SafeURL(fullShort), "")
 			templ.Handler(c).ServeHTTP(w, r)
 		})
 	}
 }
 
-func FileServer(r chi.Router, path string, root http.FileSystem) {
+func fileServer(r chi.Router, path string, root http.FileSystem) {
 	if strings.ContainsAny(path, "{}*") {
 		panic("FileServer does not permit any URL parameters.")
 	}

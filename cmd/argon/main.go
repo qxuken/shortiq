@@ -47,4 +47,15 @@ func main() {
 	} else {
 		fmt.Println("Password is incorrect!")
 	}
+
+	match, err = argon2.VerifyEncoded([]byte("test"), []byte("$argon2id$v=19$m=65536,t=3,p=4$DQZdkfMaVVZCnm/GyxZCPA$dNPCNuwFa7J7HY+gB+O096y0hJfzzpo+iC8hRBWmLv8"))
+	if err != nil {
+		fmt.Println("Error verifying password:", err)
+		return
+	}
+	if match {
+		fmt.Println("Password is correct!")
+	} else {
+		fmt.Println("Password is incorrect!")
+	}
 }

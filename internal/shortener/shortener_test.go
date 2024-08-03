@@ -5,15 +5,13 @@ import (
 	"log"
 	"testing"
 
+	"github.com/qxuken/short/internal/config"
 	"github.com/qxuken/short/internal/db"
 	"github.com/qxuken/short/internal/shortener"
 )
 
-func createDB(t *testing.T) *db.SqliteDB {
-	db, err := db.ConnectSqlite3(":memory:")
-	if err != nil {
-		t.Fatal(err)
-	}
+func createDB() *db.SqliteDB {
+	db := db.ConnectSqlite3(&config.Config{}, ":memory:")
 	return db
 }
 
@@ -26,7 +24,7 @@ func TestGeneratingUrls(t *testing.T) {
 }
 
 func TestGeneratingCollisionFree(t *testing.T) {
-	db := createDB(t)
+	db := createDB()
 	urls := make([]string, 10_000)
 	for i := 0; i < 5000; i++ {
 		testS := fmt.Sprintf("test %d", i)
@@ -35,12 +33,12 @@ func TestGeneratingCollisionFree(t *testing.T) {
 	}
 
 	for _, url := range urls {
-		t.Logf("url: %v\n", url)
 		short, err := shortener.ShortUrlChecked(db, 5)
-		t.Logf("short: %v\n", short)
 		db.SetLink(url, short)
-		t.Logf("err: %v\n", err)
 		if err != nil {
+			t.Logf("url: %v\n", url)
+			t.Logf("short: %v\n", short)
+			t.Logf("err: %v\n", err)
 			log.Fatal(err)
 		}
 	}

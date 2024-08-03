@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/qxuken/short/internal"
+	"github.com/qxuken/short/internal/config"
 	"github.com/qxuken/short/internal/db"
 	"github.com/qxuken/short/internal/validator"
 )
@@ -15,17 +15,14 @@ var (
 	MOCK_URL, _ = url.Parse(MOCK_URL_STR)
 )
 
-func createConf() *internal.Config {
-	config := new(internal.Config)
+func createConf() *config.Config {
+	config := new(config.Config)
 	config.PublicUrl = *MOCK_URL
 	return config
 }
 
-func createDB(t *testing.T) *db.SqliteDB {
-	db, err := db.ConnectSqlite3(":memory:")
-	if err != nil {
-		t.Fatal(err)
-	}
+func createDB() *db.SqliteDB {
+	db := db.ConnectSqlite3(&config.Config{}, ":memory:")
 	return db
 }
 
@@ -75,7 +72,7 @@ func TestMatchingInvalidRedirectUrl(t *testing.T) {
 }
 
 func TestSimpleValidShortUrl(t *testing.T) {
-	db := createDB(t)
+	db := createDB()
 	url := "qxuken"
 	res := validator.ValidateShortHandle(db, url)
 	if res != nil {
@@ -84,7 +81,7 @@ func TestSimpleValidShortUrl(t *testing.T) {
 }
 
 func TestComplexValidShortUrl(t *testing.T) {
-	db := createDB(t)
+	db := createDB()
 	url := "AaZz09qxuke23n-sadfashfsD_1sdasfdf"
 	res := validator.ValidateShortHandle(db, url)
 	if res != nil {
@@ -93,7 +90,7 @@ func TestComplexValidShortUrl(t *testing.T) {
 }
 
 func TestShortInvalidShortUrl(t *testing.T) {
-	db := createDB(t)
+	db := createDB()
 	url := "qxuk"
 	res := validator.ValidateShortHandle(db, url)
 	if res == nil {
@@ -102,7 +99,7 @@ func TestShortInvalidShortUrl(t *testing.T) {
 }
 
 func TestTooLongInvalidShortUrl(t *testing.T) {
-	db := createDB(t)
+	db := createDB()
 	url := "dsfklaslkfjasldjfasdkfjasdlfjklasdjkfasdklflkasdjfldsfjasdshdjfaa"
 	res := validator.ValidateShortHandle(db, url)
 	if res == nil {
@@ -111,7 +108,7 @@ func TestTooLongInvalidShortUrl(t *testing.T) {
 }
 
 func TestCharacterInvalidShortUrl(t *testing.T) {
-	db := createDB(t)
+	db := createDB()
 	url := "/asdfsa=sdfasdf?q=klasd"
 	res := validator.ValidateShortHandle(db, url)
 	if res == nil {

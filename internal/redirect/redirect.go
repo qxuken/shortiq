@@ -1,4 +1,4 @@
-package routes
+package redirect
 
 import (
 	"database/sql"

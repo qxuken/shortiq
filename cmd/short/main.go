@@ -2,50 +2,41 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
-	"path"
-	"time"
+	"os"
 
 	"github.com/joho/godotenv"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-
-	"github.com/qxuken/short/internal"
-	"github.com/qxuken/short/internal/db"
-	"github.com/qxuken/short/internal/routes"
-	"github.com/qxuken/short/web"
+	"github.com/qxuken/short/internal/app"
+	"github.com/qxuken/short/internal/auth"
 )
+
+func hashCmd() {
+	if len(os.Args) < 3 {
+		fmt.Println("Not enough arguments: no token provided")
+		os.Exit(1)
+	}
+	token := os.Args[2]
+	phc, err := auth.GeneratePHCHash([]byte(token))
+	if err != nil {
+		fmt.Println("Not enough arguments")
+		os.Exit(1)
+	}
+	fmt.Println(phc)
+}
 
 func main() {
 	godotenv.Load()
-	conf := internal.LoadConfig()
-	if conf.Debug {
-		log.Println("Application running in development mode")
-		log.Printf("Config: %+v\n", conf)
+
+	var cmd string
+	if len(os.Args) > 1 {
+		cmd = os.Args[1]
 	}
 
-	dbPath := path.Join(conf.DataPath, "main.db?mode=rwc")
-	log.Printf("Opeening db on %v\n", dbPath)
-	db, err := db.ConnectSqlite3(dbPath)
-	if err != nil {
-		log.Fatal(err)
+	switch cmd {
+	case "hash":
+		hashCmd()
+	default:
+		app.RunApp()
 	}
 
-	r := chi.NewRouter()
-
-	r.Use(middleware.Timeout(60 * time.Second))
-	r.Use(middleware.Recoverer)
-
-	r.Get("/u/{short}", routes.RedirectRoute(db))
-	r.Route("/a/e", routes.ExportRouter(db))
-	r.Route("/api", routes.ApiRouter(conf, db))
-	r.Group(web.WebRouter(conf, db))
-
-	bind := fmt.Sprintf("%v:%v", conf.Bind, conf.Port)
-	log.Printf("Listening on http://%v\n", bind)
-	log.Printf("Available at %v\n", conf.PublicUrlStr)
-
-	log.Fatal(http.ListenAndServe(bind, r))
 }

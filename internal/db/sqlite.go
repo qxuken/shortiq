@@ -1,8 +1,11 @@
 package db
 
 import (
+	"log"
+
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/qxuken/short/internal/config"
 )
 
 const (
@@ -34,14 +37,16 @@ type SqliteDB struct {
 	db *sqlx.DB
 }
 
-func ConnectSqlite3(path string) (*SqliteDB, error) {
+func ConnectSqlite3(conf *config.Config, path string) *SqliteDB {
+	if conf.Verbose {
+		log.Printf("Opening db on %v\n", path)
+	}
 	db, err := sqlx.Connect("sqlite3", path)
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 	db.MustExec(schema)
-
-	return &SqliteDB{db}, nil
+	return &SqliteDB{db}
 }
 
 func (db *SqliteDB) GetLink(shortUrl string) (string, error) {

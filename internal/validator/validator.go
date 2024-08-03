@@ -4,11 +4,11 @@ import (
 	"errors"
 	netUrl "net/url"
 
-	"github.com/qxuken/short/internal"
+	"github.com/qxuken/short/internal/config"
 	"github.com/qxuken/short/internal/db"
 )
 
-func ValidateRedirectUrl(conf *internal.Config, url string, touched bool) error {
+func ValidateRedirectUrl(conf *config.Config, url string, touched bool) error {
 	if !touched && url == "" {
 		return nil
 	}

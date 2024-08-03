@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/render"
 
-	"github.com/qxuken/short/internal"
+	"github.com/qxuken/short/internal/config"
 	mdb "github.com/qxuken/short/internal/db"
 	"github.com/qxuken/short/internal/shortener"
 	"github.com/qxuken/short/internal/validator"
@@ -31,7 +31,7 @@ func (rd *CreateShortUrl) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func CreateShortUrlHandler(conf *internal.Config, db mdb.DB) func(w http.ResponseWriter, r *http.Request) {
+func CreateShortUrlHandler(conf *config.Config, db mdb.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := &CreateShortUrl{}
 		if err := render.Bind(r, data); err != nil {
