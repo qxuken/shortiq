@@ -1,11 +1,9 @@
-package main
+package shortener_charts
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/go-echarts/go-echarts/v2/charts"
-	"github.com/go-echarts/go-echarts/v2/components"
 	"github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/go-echarts/go-echarts/v2/types"
 
@@ -14,25 +12,24 @@ import (
 	"github.com/qxuken/short/internal/shortener"
 )
 
-type CollisionData struct {
+type collisionData struct {
 	count int
 	data  []opts.LineData
 }
 
-func generateTestMarks() ([]int, []string) {
-	runs := []int{0, 100_000, 500_000, 1_000_000, 5_000_000, 10_000_000, 50_000_000, 100_000_000}
+func generateCollisionTestMarks(runs []int) []string {
 	xAxis := make([]string, len(runs))
 	for i, run := range runs {
 		xAxis[i] = humanize.Comma(int64(run))
 	}
 	fmt.Println("Runs ", xAxis)
-	return runs, xAxis
+	return xAxis
 }
 
-func generateLineItems(runs []int, count int, ch chan CollisionData) {
+func generateCollisionLineItems(runs []int, count int, ch chan collisionData) {
 	handles := map[string]bool{}
 	data := make([]opts.LineData, len(runs))
-	fmt.Println("Runs for len ", count)
+	fmt.Println("Start for len ", count)
 	collisions := 0
 	for i, run := range runs {
 		start := 0
@@ -52,7 +49,7 @@ func generateLineItems(runs []int, count int, ch chan CollisionData) {
 		data[i] = opts.LineData{Value: collisions}
 	}
 	fmt.Println("Done for len ", count)
-	ch <- CollisionData{count, data}
+	ch <- collisionData{count, data}
 }
 
 func newTrue() *bool {
@@ -60,8 +57,9 @@ func newTrue() *bool {
 	return &b
 }
 
-func generateCollisionChart() *charts.Line {
-	runs, xAxis := generateTestMarks()
+func GenerateCollisionChart(runs []int, countGroups [][]int) *charts.Line {
+	fmt.Println("Generating collision chart")
+	xAxis := generateCollisionTestMarks(runs)
 
 	line := charts.NewLine()
 
@@ -75,29 +73,19 @@ func generateCollisionChart() *charts.Line {
 	line.SetXAxis(xAxis).
 		SetSeriesOptions(charts.WithLineChartOpts(opts.LineChart{Smooth: newTrue()}))
 
-	ch := make(chan CollisionData)
-	run := func(counts []int) {
-		for _, count := range counts {
-			go generateLineItems(runs, count, ch)
+	ch := make(chan collisionData)
+	run := func(group []int) {
+		for _, count := range group {
+			go generateCollisionLineItems(runs, count, ch)
 		}
-		for range counts {
+		for range group {
 			data := <-ch
 			line.AddSeries(fmt.Sprintf("%v", data.count), data.data)
 		}
 	}
-	run([]int{5, 6, 7})
-	run([]int{8, 9})
-	run([]int{9})
-	return line
-}
-
-func main() {
-	page := components.NewPage()
-	page.AddCharts(generateCollisionChart())
-
-	f, err := os.Create("./tmp/chart.html")
-	if err != nil {
-		panic(err)
+	for _, group := range countGroups {
+		run(group)
 	}
-	page.Render(f)
+
+	return line
 }
