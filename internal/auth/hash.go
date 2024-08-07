@@ -5,7 +5,7 @@ import (
 	"github.com/qxuken/short/internal/config"
 )
 
-func Verify(conf *config.Config, token []byte) (bool, error) {
+func VerifyHash(conf *config.Config, token []byte) (bool, error) {
 	return argon2.VerifyEncoded(token, conf.AdminToken)
 }
 

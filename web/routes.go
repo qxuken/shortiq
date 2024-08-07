@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -11,8 +12,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/gorilla/csrf"
+
 	servertiming "github.com/mitchellh/go-server-timing"
 
+	"github.com/qxuken/short/internal/auth"
 	"github.com/qxuken/short/internal/config"
 	dbModule "github.com/qxuken/short/internal/db"
 	"github.com/qxuken/short/internal/shortener"
@@ -23,8 +27,25 @@ import (
 
 func WebRouter(conf *config.Config, db dbModule.DB) func(chi.Router) {
 	return func(r chi.Router) {
-		r.Use(func(h http.Handler) http.Handler {
-			return servertiming.Middleware(h, nil)
+		workDir, _ := os.Getwd()
+		filesDir := http.Dir(filepath.Join(workDir, "./assets"))
+		fileServer(r, "/assets", filesDir)
+
+		r.Group(pages(conf, db))
+	}
+}
+
+func pages(conf *config.Config, db dbModule.DB) func(chi.Router) {
+	return func(r chi.Router) {
+
+		r.Use(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				ctx := context.WithValue(r.Context(), "app.conf.verbose", conf.Verbose)
+				next.ServeHTTP(w, r.WithContext(ctx))
+			})
+		})
+		r.Use(func(next http.Handler) http.Handler {
+			return servertiming.Middleware(next, nil)
 		})
 		if conf.Verbose {
 			r.Use(middleware.RequestID)
@@ -33,11 +54,20 @@ func WebRouter(conf *config.Config, db dbModule.DB) func(chi.Router) {
 			r.Use(middleware.Compress(3))
 		}
 
-		workDir, _ := os.Getwd()
-		filesDir := http.Dir(filepath.Join(workDir, "./assets"))
-		fileServer(r, "/assets", filesDir)
+		r.Use(auth.CokieAuthMiddleware(conf))
+		r.Use(csrf.Protect(conf.AppSecret, csrf.ErrorHandler(templ.Handler(page.CSRFError()))))
 
-		r.Get("/", templ.Handler(page.Index(conf.Verbose, conf.PublicUrlStr, "", "")).ServeHTTP)
+		r.Group(authorizedRouter(conf, db))
+		r.Group(unauthorizedRouter(conf))
+
+	}
+}
+
+func authorizedRouter(conf *config.Config, db dbModule.DB) func(chi.Router) {
+	return func(r chi.Router) {
+		r.Use(authorizedOnly)
+
+		r.Get("/", templ.Handler(page.Index(conf.PublicUrlStr, "", "")).ServeHTTP)
 
 		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
 			timing := servertiming.FromContext(r.Context())
@@ -88,7 +118,7 @@ func WebRouter(conf *config.Config, db dbModule.DB) func(chi.Router) {
 			dt.Stop()
 
 			if err != nil {
-				http.Error(w, http.StatusText(500), 500)
+				templ.Handler(page.ServerError()).ServeHTTP(w, r)
 				return
 			}
 
@@ -199,10 +229,65 @@ func WebRouter(conf *config.Config, db dbModule.DB) func(chi.Router) {
 			st.Stop()
 
 			fullShort := fmt.Sprintf("%v/u/%v", conf.PublicUrlStr, short)
-			c := page.Stats(conf.Verbose, templ.SafeURL(fullShort), "")
+			c := page.Stats(templ.SafeURL(fullShort), "")
 			templ.Handler(c).ServeHTTP(w, r)
 		})
 	}
+}
+
+func unauthorizedRouter(conf *config.Config) func(chi.Router) {
+	return func(r chi.Router) {
+		r.Get("/login", templ.Handler(page.Auth("")).ServeHTTP)
+		r.Post("/login", func(w http.ResponseWriter, r *http.Request) {
+			timing := servertiming.FromContext(r.Context())
+
+			vt := timing.NewMetric("extracting_values").Start()
+			r.ParseForm()
+			form := r.PostForm
+			token := form.Get("token")
+			vt.Stop()
+
+			ut := timing.NewMetric("validating_token").Start()
+			ok, tokenValidationErr := auth.VerifyHash(conf, []byte(token))
+			ut.Stop()
+
+			if ok && tokenValidationErr == nil {
+				cookie := http.Cookie{
+					Name:     "authToken",
+					Value:    token,
+					Path:     "/",
+					MaxAge:   3600,
+					HttpOnly: true,
+					Secure:   true,
+					SameSite: http.SameSiteLaxMode,
+				}
+				http.SetCookie(w, &cookie)
+				if _, ok := r.Header["Hx-Request"]; ok {
+					w.Header().Add("HX-Redirect", "/")
+					w.Header().Add("HX-Replace-Url", "/")
+				} else {
+					http.Redirect(w, r, "/", 307)
+				}
+				return
+			}
+
+			c := component.AuthForm("Invalid token")
+			templ.Handler(c).ServeHTTP(w, r)
+			return
+		})
+	}
+}
+
+func authorizedOnly(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		isAuthorized, ok := ctx.Value("isAuthorized").(bool)
+		if !ok || !isAuthorized {
+			http.Redirect(w, r, "/login", 302)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func fileServer(r chi.Router, path string, root http.FileSystem) {

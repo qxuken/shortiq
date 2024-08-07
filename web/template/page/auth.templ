@@ -2,8 +2,8 @@ package page
 
 import "github.com/qxuken/short/web/template/component"
 
-templ Index(baseUrl, urlErr, shortErr string) {
+templ Auth(tokenErr string) {
 	@component.DefaultLayout("SHORTIQ") {
-		@component.CreateLink(baseUrl, "generated", urlErr, shortErr)
+		@component.AuthForm(tokenErr)
 	}
 }

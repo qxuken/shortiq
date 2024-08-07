@@ -1,7 +1,7 @@
 package component
 
-templ DefaultLayout(devMode bool, title string) {
-	@htmlTemplate(devMode, title) {
+templ DefaultLayout(title string) {
+	@htmlTemplate(title) {
 		<div class="default-layout">
 			<a href="/">
 				@MainHeading(title)

@@ -1,0 +1,15 @@
+package page
+
+import "github.com/qxuken/short/web/template/component"
+
+templ CSRFError() {
+	@component.DefaultLayout("SHORTIQ") {
+		@component.SubHeading("No csrf token provided")
+	}
+}
+
+templ ServerError() {
+	@component.DefaultLayout("SHORTIQ") {
+		@component.SubHeading("Something went wrong")
+	}
+}

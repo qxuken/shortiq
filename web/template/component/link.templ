@@ -53,6 +53,7 @@ templ LinkFormActions(shortType string) {
 
 templ CreateLink(baseUrl, shortType, urlErr, shortErr string) {
 	<form id="create-link" class="shortiq-form" hx-post="/" hx-swap="outerHTML">
+		@CSRF()
 		@RedirectUrlInput(urlErr)
 		if shortType == "custom" {
 			@ShortUrlInput(shortErr)

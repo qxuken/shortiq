@@ -11,6 +11,16 @@ import (
 const (
 	schema = `
 	PRAGMA journal_mode=WAL;
+	PRAGMA foreign_keys = ON;
+	PRAGMA synchronous = NORMAL;
+	PRAGMA cache_size = 10000;
+	PRAGMA temp_store = MEMORY;
+	PRAGMA encoding = 'UTF-8';
+	PRAGMA auto_vacuum = FULL;
+	PRAGMA busy_timeout = 3000;
+	PRAGMA optimize;
+	PRAGMA mmap_size = 268435456;
+
 	CREATE TABLE IF NOT EXISTS link (
 		redirect_url STRING,
 		short_url STRING

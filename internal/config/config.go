@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"log"
 	"net"
 	"net/url"
@@ -17,6 +18,7 @@ type Config struct {
 	PublicUrlStr string  `ignore:"true"`
 	HandleLen    int     `envconfig:"HANDLE_LEN" default:"5"`
 	AdminToken   []byte  `envconfig:"ADMIN_TOKEN" required:"true"`
+	AppSecret    []byte  `envconfig:"APP_SECRET" required:"true"`
 }
 
 func LoadConfig() *Config {
@@ -25,6 +27,10 @@ func LoadConfig() *Config {
 	s.PublicUrlStr = s.PublicUrl.String()
 	if err != nil {
 		log.Fatal(err.Error())
+	}
+
+	if len(s.AppSecret) != 32 {
+		log.Fatal(errors.New("APP_SECRET should 32 bytes long"))
 	}
 
 	if s.Verbose {

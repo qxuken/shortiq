@@ -1,15 +1,15 @@
 package component
 
-templ htmxScript(devMode bool) {
+templ htmxScript() {
 	<script defer src="/assets/htmx.1.9.12.min.js"></script>
-	if devMode {
+	if  ctx.Value("app.conf.verbose").(bool) {
 		<script>
 			document.addEventListener('DOMContentLoaded', () => htmx.logAll());
 		</script>
 	}
 }
 
-templ htmlTemplate(devMode bool, title string) {
+templ htmlTemplate(title string) {
 	<!DOCTYPE html />
 	<html lang="en">
 		<head>
@@ -23,7 +23,7 @@ templ htmlTemplate(devMode bool, title string) {
 		</head>
 		<body hx-boost="true">
 			{ children... }
-			@htmxScript(devMode)
+			@htmxScript()
 		</body>
 	</html>
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/qxuken/short/internal/app"
 	"github.com/qxuken/short/internal/auth"
+	"github.com/qxuken/short/internal/config"
 )
 
 func hashCmd() {
@@ -24,6 +25,25 @@ func hashCmd() {
 	fmt.Println(phc)
 }
 
+func verifyCmd() {
+	if len(os.Args) < 3 {
+		fmt.Println("Not enough arguments: no token provided")
+		os.Exit(1)
+	}
+
+	conf := config.LoadConfig()
+	fmt.Println(string(conf.AdminToken))
+
+	token := os.Args[2]
+	_, err := auth.VerifyHash(conf, []byte(token))
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println("Token is valid")
+}
+
 func main() {
 	godotenv.Load()
 
@@ -35,8 +55,9 @@ func main() {
 	switch cmd {
 	case "hash":
 		hashCmd()
+	case "verify":
+		verifyCmd()
 	default:
 		app.RunApp()
 	}
-
 }

@@ -1,0 +1,33 @@
+package component
+
+templ AdminTokenInput(err string) {
+	<div class="input-container">
+		<input
+			id="token"
+			name="token"
+			type="password"
+			placeholder="Enter admin token"
+			hx-preserve
+		/>
+		if err != "" {
+			<div class="input-error">
+				@CrossIcon(22)
+				<span>{ err }</span>
+			</div>
+		}
+	</div>
+}
+
+templ AuthFormActions() {
+	<div class="form-actions">
+		<button class="button button-submit" type="submit">LOGIN</button>
+	</div>
+}
+
+templ AuthForm(tokenErr string) {
+	<form id="admin-token" class="shortiq-form" hx-post="/login" hx-swap="outerHTML">
+		@CSRF()
+		@AdminTokenInput(tokenErr)
+		@AuthFormActions()
+	</form>
+}

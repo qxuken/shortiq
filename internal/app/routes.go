@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/render"
 
 	"github.com/qxuken/short/internal/api"
+	"github.com/qxuken/short/internal/auth"
 	"github.com/qxuken/short/internal/config"
 	mdb "github.com/qxuken/short/internal/db"
 	"github.com/qxuken/short/internal/redirect"
@@ -23,6 +24,8 @@ func apiV1Router(conf *config.Config, db mdb.DB) func(chi.Router) {
 	return func(r chi.Router) {
 		r.Use(render.SetContentType(render.ContentTypeJSON))
 		r.Use(cors.AllowAll().Handler)
+		r.Use(auth.HeaderAuthMiddleware(conf))
+		r.Use(api.AuthorizedOnly)
 
 		r.Route("/export", exportV1(db))
 		r.Post("/short", api.CreateShortUrlHandler(conf, db))
