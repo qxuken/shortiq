@@ -23,7 +23,8 @@ const (
 
 	CREATE TABLE IF NOT EXISTS link (
 		redirect_url STRING,
-		short_url STRING
+		short_url STRING,
+		created_at STRING
 	);
 	CREATE UNIQUE INDEX IF NOT EXISTS idx_link_short ON link(short_url);
 	
@@ -35,6 +36,12 @@ const (
 		ts INTEGER
 	);
 	CREATE INDEX IF NOT EXISTS idx_analytics_short ON analytics(short_url);
+
+	CREATE TABLE IF NOT EXISTS app_config (
+		key STRING,
+		value STRING
+	);
+	CREATE INDEX IF NOT EXISTS idx_app_config_key ON app_config(key);
 	`
 	getLink   = "SELECT redirect_url FROM link WHERE short_url = ? LIMIT 1;"
 	setLink   = "INSERT INTO link (redirect_url, short_url) VALUES (?, ?);"
@@ -83,6 +90,11 @@ func (db *SqliteDB) GetLinkAnalytics() ([]AnalyticsItem, error) {
 }
 
 func (db *SqliteDB) LogVisit(v AnalyticsItem) error {
+	_, err := db.db.Exec(logVisit, v.ShortUrl, v.Country, v.Referer, v.Ip, v.Ts)
+	return err
+}
+
+func (db *SqliteDB) GetConfigKey(key string) (string, error) {
 	_, err := db.db.Exec(logVisit, v.ShortUrl, v.Country, v.Referer, v.Ip, v.Ts)
 	return err
 }

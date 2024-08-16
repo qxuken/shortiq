@@ -6,6 +6,8 @@ type DB interface {
 	GetLinks() ([]LinkItem, error)
 	GetLinkAnalytics() ([]AnalyticsItem, error)
 	LogVisit(v AnalyticsItem) error
+	GetConfigKey(key string) (string, error)
+	SetConfigKey(key, value string) error
 }
 
 type LinkItem struct {
