@@ -8,3 +8,4 @@
 
 # Envfile
 .env
+.DS_Store
