@@ -19,7 +19,7 @@ RUN npm run build
 
 # ---
 
-FROM golang:1.22-alpine AS backend-base
+FROM golang:1.25-alpine AS backend-base
 
 RUN apk add build-base
 RUN go install github.com/a-h/templ/cmd/templ@latest

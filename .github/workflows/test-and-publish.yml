@@ -2,9 +2,9 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["master"]
 
 jobs:
   check:
@@ -15,13 +15,14 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22.5'
+          go-version: "1.25.3"
       - name: Install templ
         run: go install github.com/a-h/templ/cmd/templ@latest
       - name: Generate templates
         run: templ generate
       - name: Test
         run: go test ./...
+
   publish:
     needs: check
     runs-on: ubuntu-latest
