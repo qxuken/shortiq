@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-echarts/go-echarts/v2/components"
 
-	"github.com/qxuken/short/internal/shortener/charts"
+	shortener_charts "github.com/qxuken/short/internal/shortener/charts"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 	page := components.NewPage()
 	page.AddCharts(
 		shortener_charts.GenerateCollisionChart(
-			[]int{0, 100_000, 500_000, 1_000_000}, //, 5_000_000, 10_000_000, 50_000_000, 100_000_000},
+			[]int{0, 100_000, 500_000, 1_000_000, 5_000_000}, //, 10_000_000, 50_000_000, 100_000_000},
 			countGroups,
 		),
 		shortener_charts.GenerateSpeedChart(500, countGroups),

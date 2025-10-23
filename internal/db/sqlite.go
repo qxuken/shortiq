@@ -43,11 +43,13 @@ const (
 	);
 	CREATE INDEX IF NOT EXISTS idx_app_config_key ON app_config(key);
 	`
-	getLink   = "SELECT redirect_url FROM link WHERE short_url = ? LIMIT 1;"
-	setLink   = "INSERT INTO link (redirect_url, short_url) VALUES (?, ?);"
-	getLinks  = "SELECT redirect_url, short_url FROM link;"
-	getVisits = "SELECT short_url, country, referer, ip, ts FROM analytics;"
-	logVisit  = "INSERT INTO analytics (short_url, country, referer, ip, ts) VALUES (?, ?, ?, ?, ?);"
+	queryLink    = "SELECT redirect_url FROM link WHERE short_url = ? LIMIT 1;"
+	insertLink   = "INSERT INTO link (redirect_url, short_url) VALUES (?, ?);"
+	queryLinks   = "SELECT redirect_url, short_url FROM link;"
+	queryVisits  = "SELECT short_url, country, referer, ip, ts FROM analytics;"
+	insertVisit  = "INSERT INTO analytics (short_url, country, referer, ip, ts) VALUES (?, ?, ?, ?, ?);"
+	queryConfig  = "SELECT value FROM app_config WHERE key = ?;"
+	upsertConfig = "INSERT INTO app_config (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value"
 )
 
 type SqliteDB struct {
@@ -66,35 +68,37 @@ func ConnectSqlite3(conf *config.Config, path string) *SqliteDB {
 	return &SqliteDB{db}
 }
 
-func (db *SqliteDB) GetLink(shortUrl string) (string, error) {
-	var url string
-	err := db.db.Get(&url, getLink, shortUrl)
-	return url, err
+func (db *SqliteDB) GetLink(shortUrl string) (url string, err error) {
+	err = db.db.Get(&url, queryLink, shortUrl)
+	return
 }
 
-func (db *SqliteDB) SetLink(redirectUrl, shortUrl string) error {
-	_, err := db.db.Exec(setLink, redirectUrl, shortUrl)
-	return err
+func (db *SqliteDB) SetLink(redirectUrl, shortUrl string) (err error) {
+	_, err = db.db.Exec(insertLink, redirectUrl, shortUrl)
+	return
 }
 
-func (db *SqliteDB) GetLinks() ([]LinkItem, error) {
-	links := []LinkItem{}
-	err := db.db.Select(&links, getLinks)
-	return links, err
+func (db *SqliteDB) GetLinks() (links []LinkItem, err error) {
+	err = db.db.Select(&links, queryLinks)
+	return
 }
 
-func (db *SqliteDB) GetLinkAnalytics() ([]AnalyticsItem, error) {
-	visits := []AnalyticsItem{}
-	err := db.db.Select(&visits, getVisits)
-	return visits, err
+func (db *SqliteDB) GetLinkAnalytics() (visits []AnalyticsItem, err error) {
+	err = db.db.Select(&visits, queryVisits)
+	return
 }
 
-func (db *SqliteDB) LogVisit(v AnalyticsItem) error {
-	_, err := db.db.Exec(logVisit, v.ShortUrl, v.Country, v.Referer, v.Ip, v.Ts)
-	return err
+func (db *SqliteDB) LogVisit(v AnalyticsItem) (err error) {
+	_, err = db.db.Exec(insertVisit, v.ShortUrl, v.Country, v.Referer, v.Ip, v.Ts)
+	return
 }
 
-func (db *SqliteDB) GetConfigKey(key string) (string, error) {
-	_, err := db.db.Exec(logVisit, v.ShortUrl, v.Country, v.Referer, v.Ip, v.Ts)
-	return err
+func (db *SqliteDB) GetConfigItem(key string) (value string, err error) {
+	err = db.db.Get(&value, queryConfig, key)
+	return
+}
+
+func (db *SqliteDB) SetConfigItem(key, value string) (err error) {
+	_, err = db.db.Exec(upsertConfig, key, value)
+	return
 }

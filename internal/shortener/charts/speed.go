@@ -27,7 +27,7 @@ func generateScatterData(runs int, count int, xIndex int) []opts.ScatterData {
 	fmt.Println("Start for len ", count)
 	var start time.Time
 	var duration time.Duration
-	for i := 0; i < runs; i++ {
+	for i := range runs {
 		start = time.Now()
 		shortener.ShortUrlWithLen(count)
 		duration = time.Since(start)
