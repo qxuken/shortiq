@@ -90,7 +90,7 @@ func TestComplexValidShortUrl(t *testing.T) {
 
 func TestShortInvalidShortUrl(t *testing.T) {
 	db := createDB()
-	url := "qxuk"
+	url := "qxu"
 	res := validator.ValidateShortHandle(db, url)
 	if res == nil {
 		t.Fatalf("Failed to validate %s", url)
