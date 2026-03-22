@@ -31,7 +31,7 @@ func (rd *CreateShortUrl) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func CreateShortUrlHandler(conf *config.Config, db mdb.DB) func(w http.ResponseWriter, r *http.Request) {
+func CreateShortUrlHandler(conf *config.Config, mainDb mdb.MainDb) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := &CreateShortUrl{}
 		if err := render.Bind(r, data); err != nil {
@@ -43,19 +43,19 @@ func CreateShortUrlHandler(conf *config.Config, db mdb.DB) func(w http.ResponseW
 			return
 		}
 		if data.ShortUrl == "" {
-			short, shortErr := shortener.ShortUrlChecked(db, conf.HandleLen)
+			short, shortErr := shortener.ShortUrlChecked(mainDb, conf.HandleLen)
 			if shortErr != nil {
 				render.Render(w, r, ErrInternalError(shortErr))
 				return
 			}
 			data.ShortUrl = short
 		} else {
-			if err := validator.ValidateShortHandle(db, data.ShortUrl); err != nil {
+			if err := validator.ValidateShortHandle(mainDb, data.ShortUrl); err != nil {
 				render.Render(w, r, ErrInvalidRequest(err))
 				return
 			}
 		}
-		if err := db.SetLink(data.RedirectUrl, data.ShortUrl); err != nil {
+		if err := mainDb.SetLink(data.RedirectUrl, data.ShortUrl); err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
 		}

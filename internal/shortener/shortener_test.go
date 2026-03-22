@@ -10,9 +10,8 @@ import (
 	"github.com/qxuken/short/internal/shortener"
 )
 
-func createDB() *db.SqliteDB {
-	db := db.ConnectSqlite3(&config.Config{}, ":memory:")
-	return db
+func createDB() *db.UrlStore {
+	return db.ConnectUrlStore(&config.Config{}, ":memory:")
 }
 
 func TestGeneratingUrls(t *testing.T) {

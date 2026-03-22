@@ -79,8 +79,8 @@ script Copy(url templ.SafeURL, id string) {
 		})
 }
 
-templ LinkStats(short templ.SafeURL, notification string) {
-	<div>
+templ LinkStats(short templ.SafeURL, shortUrl string, notification string) {
+	<div class="link-stats-result">
 		if notification != "" {
 			<div class="text-center margin-block">
 				@SubHeading(notification)
@@ -88,13 +88,19 @@ templ LinkStats(short templ.SafeURL, notification string) {
 		}
 		<div class="link-container">
 			<div class="link-display">{ string(short) }</div>
-			<button
-				id="copy-link"
-				class="icon-button"
-				onclick={ Copy(short, "copy-link") }
-			>
-				@CopyIcon(40)
-			</button>
+			<div class="link-actions">
+				<button
+					id="copy-link"
+					class="icon-button"
+					onclick={ Copy(short, "copy-link") }
+					title="Copy link"
+				>
+					@CopyIcon(32)
+				</button>
+			</div>
+		</div>
+		<div class="link-stats-actions">
+			<a href={ templ.SafeURL("/stats/" + shortUrl) } class="button button-secondary">View Stats</a>
 		</div>
 	</div>
 }

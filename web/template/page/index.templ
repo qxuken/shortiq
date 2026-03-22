@@ -5,5 +5,9 @@ import "github.com/qxuken/short/web/template/component"
 templ Index(baseUrl, urlErr, shortErr string) {
 	@component.DefaultLayout("SHORTIQ") {
 		@component.CreateLink(baseUrl, "generated", urlErr, shortErr)
+		<a href="/stats" class="index-corner-link">
+			@component.ChartIcon(18)
+			<span>Stats Overview</span>
+		</a>
 	}
 }

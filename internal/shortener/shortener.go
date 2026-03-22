@@ -34,10 +34,10 @@ func ShortUrlWithLen(length int) string {
 
 }
 
-func ShortUrlChecked(db db.DB, handleLen int) (string, error) {
+func ShortUrlChecked(mainDb db.MainDb, handleLen int) (string, error) {
 	for range RETRIES {
 		short := ShortUrlWithLen(handleLen)
-		_, err := db.GetLink(short)
+		_, err := mainDb.GetLink(short)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				return short, nil

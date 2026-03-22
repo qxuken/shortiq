@@ -17,6 +17,12 @@
     --button-color: var(--color-success);
   }
 
+  &.button-secondary {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+    border-width: 2px;
+  }
+
   &:is(:hover, :focus) {
     background: var(--button-color);
     color: var(--color-bg);

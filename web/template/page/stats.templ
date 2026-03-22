@@ -1,9 +1,292 @@
 package page
 
-import "github.com/qxuken/short/web/template/component"
+import (
+	"strconv"
 
-templ Stats(short templ.SafeURL, notification string) {
-	@component.DefaultLayout("SHORTIQ") {
-		@component.LinkStats(short, notification)
+	mdb "github.com/qxuken/short/internal/db"
+	"github.com/qxuken/short/web/template/component"
+)
+
+type LinkStatsData struct {
+	ShortUrl       string
+	RedirectUrl    string
+	TotalClicks    int
+	UniqueVisitors int
+	TopCountries   []mdb.CountryStats
+	TopReferers    []mdb.RefererStats
+	DailyClicks    []mdb.DailyStats
+}
+
+templ AllStats(totalLinks, totalClicks, uniqueVisitors int, topCountries []mdb.CountryStats, topReferers []mdb.RefererStats, dailyClicks []mdb.DailyStats, linksStats []LinkStatsData) {
+	@component.DefaultLayout("SHORTIQ - Stats") {
+		<div class="stats-page">
+			<div class="stats-nav">
+				<a href="/" class="nav-link">Create Link</a>
+			</div>
+			<div class="stats-header">
+				<p class="stats-kicker">Analytics</p>
+				<h1>Statistics Overview</h1>
+			</div>
+			<div class="stats-cards">
+				<div class="stat-card">
+					<div class="stat-icon">
+						@component.LinkIcon(24)
+					</div>
+					<div class="stat-content">
+						<div class="stat-value">{ strconv.Itoa(totalLinks) }</div>
+						<div class="stat-label">Total Links</div>
+					</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-icon">
+						@component.ClickIcon(24)
+					</div>
+					<div class="stat-content">
+						<div class="stat-value">{ strconv.Itoa(totalClicks) }</div>
+						<div class="stat-label">Total Clicks</div>
+					</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-icon">
+						@component.UserIcon(24)
+					</div>
+					<div class="stat-content">
+						<div class="stat-value">{ strconv.Itoa(uniqueVisitors) }</div>
+						<div class="stat-label">Unique Visitors</div>
+					</div>
+				</div>
+			</div>
+			<div class="stats-grid">
+				<div class="stats-section">
+					<div class="section-heading">
+						<p class="section-kicker">Geography</p>
+						<h2>Top Countries</h2>
+					</div>
+					if len(topCountries) > 0 {
+						<div class="stat-list">
+							for _, country := range topCountries {
+								<div class="stat-list-item">
+									<span class="stat-list-label">{ country.Country }</span>
+									<span class="stat-list-value">{ strconv.Itoa(country.Count) }</span>
+								</div>
+							}
+						</div>
+					} else {
+						<p class="no-data">No country data available</p>
+					}
+				</div>
+				<div class="stats-section">
+					<div class="section-heading">
+						<p class="section-kicker">Sources</p>
+						<h2>Top Referrers</h2>
+					</div>
+					if len(topReferers) > 0 {
+						<div class="stat-list">
+							for _, referer := range topReferers {
+								<div class="stat-list-item">
+									<span class="stat-list-label referer">{ referer.Referer }</span>
+									<span class="stat-list-value">{ strconv.Itoa(referer.Count) }</span>
+								</div>
+							}
+						</div>
+					} else {
+						<p class="no-data">No referrer data available</p>
+					}
+				</div>
+				<div class="stats-section full-width">
+					<div class="section-heading">
+						<p class="section-kicker">Momentum</p>
+						<h2>Clicks Over Time (Last 30 Days)</h2>
+					</div>
+					if len(dailyClicks) > 0 {
+						@DailyChart(dailyClicks)
+					} else {
+						<p class="no-data">No click data available</p>
+					}
+				</div>
+			</div>
+			<div class="per-link-stats">
+				<div class="section-heading per-link-heading">
+					<p class="section-kicker">Library</p>
+					<h2>Per-Link Statistics</h2>
+				</div>
+				if len(linksStats) > 0 {
+					<div class="links-stats-grid">
+						for _, link := range linksStats {
+							<div class="link-stat-card">
+								<div class="link-stat-header">
+									<a href={ templ.SafeURL("/stats/" + link.ShortUrl) } class="link-stat-short">/u/{ link.ShortUrl }</a>
+									<span class="link-stat-clicks">{ strconv.Itoa(link.TotalClicks) } clicks</span>
+								</div>
+								<div class="link-stat-url">{ link.RedirectUrl }</div>
+								<div class="link-stat-meta">
+									<span>{ strconv.Itoa(link.UniqueVisitors) } unique visitors</span>
+								</div>
+								if len(link.TopCountries) > 0 {
+									<div class="link-stat-countries">
+										<small>Top: { link.TopCountries[0].Country } ({ strconv.Itoa(link.TopCountries[0].Count) })</small>
+									</div>
+								}
+							</div>
+						}
+					</div>
+				} else {
+					<p class="no-data">No links created yet</p>
+				}
+			</div>
+		</div>
 	}
+}
+
+templ StatsPage(short templ.SafeURL, shortUrl, redirectUrl string, totalClicks, uniqueVisitors int, topCountries []mdb.CountryStats, topReferers []mdb.RefererStats, dailyClicks []mdb.DailyStats) {
+	@component.DefaultLayout("SHORTIQ - " + shortUrl) {
+		<div class="stats-page">
+			<div class="stats-nav">
+				<a href="/stats" class="back-link">
+					@component.ArrowLeftIcon(20)
+					<span>Back to Overview</span>
+				</a>
+				<a href="/" class="nav-link">Create Link</a>
+			</div>
+			<div class="stats-header">
+				<h1>Link Statistics</h1>
+				<div class="link-display-main">
+					<span class="link-short">{ string(short) }</span>
+					<button
+						id="copy-link"
+						class="icon-button"
+						onclick={ component.Copy(short, "copy-link") }
+					>
+						@component.CopyIcon(24)
+					</button>
+				</div>
+				<p class="link-redirect-url">{ redirectUrl }</p>
+			</div>
+			<div class="stats-cards">
+				<div class="stat-card highlight">
+					<div class="stat-icon">
+						@component.ClickIcon(24)
+					</div>
+					<div class="stat-content">
+						<div class="stat-value">{ strconv.Itoa(totalClicks) }</div>
+						<div class="stat-label">Total Clicks</div>
+					</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-icon">
+						@component.UserIcon(24)
+					</div>
+					<div class="stat-content">
+						<div class="stat-value">{ strconv.Itoa(uniqueVisitors) }</div>
+						<div class="stat-label">Unique Visitors</div>
+					</div>
+				</div>
+			</div>
+			<div class="stats-grid">
+				<div class="stats-section">
+					<div class="section-heading">
+						<p class="section-kicker">Geography</p>
+						<h2>Top Countries</h2>
+					</div>
+					if len(topCountries) > 0 {
+						<div class="stat-list">
+							for _, country := range topCountries {
+								<div class="stat-list-item">
+									<span class="stat-list-label">{ country.Country }</span>
+									<span class="stat-list-value">{ strconv.Itoa(country.Count) }</span>
+								</div>
+							}
+						</div>
+						<div class="stat-bar-chart">
+							for _, country := range topCountries {
+								<div class="bar-item">
+									<span class="bar-label">{ country.Country }</span>
+									<div class="bar-track">
+										<div class="bar-fill" style={ "width:" + getBarWidth(country.Count, topCountries[0].Count) + "%" }></div>
+									</div>
+									<span class="bar-value">{ strconv.Itoa(country.Count) }</span>
+								</div>
+							}
+						</div>
+					} else {
+						<p class="no-data">No country data available</p>
+					}
+				</div>
+				<div class="stats-section">
+					<div class="section-heading">
+						<p class="section-kicker">Sources</p>
+						<h2>Top Referrers</h2>
+					</div>
+					if len(topReferers) > 0 {
+						<div class="stat-list">
+							for _, referer := range topReferers {
+								<div class="stat-list-item">
+									<span class="stat-list-label referer">{ referer.Referer }</span>
+									<span class="stat-list-value">{ strconv.Itoa(referer.Count) }</span>
+								</div>
+							}
+						</div>
+					} else {
+						<p class="no-data">No referrer data available</p>
+					}
+				</div>
+				<div class="stats-section full-width">
+					<div class="section-heading">
+						<p class="section-kicker">Momentum</p>
+						<h2>Clicks Over Time (Last 30 Days)</h2>
+					</div>
+					if len(dailyClicks) > 0 {
+						@DailyChart(dailyClicks)
+					} else {
+						<p class="no-data">No click data available</p>
+					}
+				</div>
+			</div>
+		</div>
+	}
+}
+
+templ DailyChart(dailyClicks []mdb.DailyStats) {
+	<div class="chart-container">
+		<div class="chart-bars">
+			for _, day := range dailyClicks {
+				<div class="chart-bar-wrapper" title={ day.Date + ": " + strconv.Itoa(day.Count) + " clicks" }>
+					<div class="chart-bar" style={ "height:" + getChartHeight(day.Count, getMaxClicks(dailyClicks)) + "px" }></div>
+				</div>
+			}
+		</div>
+		<div class="chart-labels">
+			<span>Oldest</span>
+			<span>Most Recent</span>
+		</div>
+	</div>
+}
+
+func getMaxClicks(clicks []mdb.DailyStats) int {
+	max := 0
+	for _, c := range clicks {
+		if c.Count > max {
+			max = c.Count
+		}
+	}
+	return max
+}
+
+func getChartHeight(count, max int) string {
+	if max == 0 {
+		return "4"
+	}
+	height := (count * 100) / max
+	if height < 4 {
+		return "4"
+	}
+	return strconv.Itoa(height)
+}
+
+func getBarWidth(count, max int) string {
+	if max == 0 {
+		return "0"
+	}
+	width := (count * 100) / max
+	return strconv.Itoa(width)
 }

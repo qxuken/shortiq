@@ -8,9 +8,9 @@ import (
 	mdb "github.com/qxuken/short/internal/db"
 )
 
-func ExportRedirectAnalyticsCsv(db mdb.DB) func(w http.ResponseWriter, r *http.Request) {
+func ExportRedirectAnalyticsCsv(auxDb mdb.AuxiliaryDB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data, err := db.GetLinkAnalytics()
+		data, err := auxDb.GetLinkAnalytics()
 		if err != nil {
 			render.Render(w, r, ErrInternalError(err))
 			return
@@ -21,9 +21,9 @@ func ExportRedirectAnalyticsCsv(db mdb.DB) func(w http.ResponseWriter, r *http.R
 	}
 }
 
-func ExportRedirectLinksCsv(db mdb.DB) func(w http.ResponseWriter, r *http.Request) {
+func ExportRedirectLinksCsv(mainDb mdb.MainDb) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data, err := db.GetLinks()
+		data, err := mainDb.GetLinks()
 		if err != nil {
 			render.Render(w, r, ErrInternalError(err))
 			return

@@ -21,9 +21,8 @@ func createConf() *config.Config {
 	return config
 }
 
-func createDB() *db.SqliteDB {
-	db := db.ConnectSqlite3(&config.Config{}, ":memory:")
-	return db
+func createDB() *db.UrlStore {
+	return db.ConnectUrlStore(&config.Config{}, ":memory:")
 }
 
 func TestSimpleValidRedirectUrl(t *testing.T) {

@@ -6,6 +6,7 @@
 @import "./form.css";
 @import "./link.css";
 @import "./atoms.css";
+@import "./stats.css";
 
 :root,
 input {

@@ -30,7 +30,7 @@ func CokieAuthMiddleware(conf *config.Config) func(next http.Handler) http.Handl
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			isAuthorized := false
 			if authCokie, err := r.Cookie("authToken"); err == nil {
-				isAuthorized, _ = VerifyHash(conf, []byte(authCokie.Value))
+				isAuthorized, _ = VerifyJWT(conf, authCokie.Value)
 			}
 			if conf.Verbose {
 				log.Println("isAuthorized", isAuthorized)

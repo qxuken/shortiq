@@ -28,10 +28,10 @@ func ValidateRedirectUrl(conf *config.Config, url string, touched bool) error {
 	return nil
 }
 
-func ValidateShortHandle(db db.DB, url string) error {
+func ValidateShortHandle(mainDb db.MainDb, url string) error {
 	l := len(url)
-	if l < 5 {
-		return errors.New("Handle must be at least 5 characters long")
+	if l < 4 {
+		return errors.New("Handle must be at least 4 characters long")
 	}
 
 	if l > 64 {
@@ -46,7 +46,7 @@ func ValidateShortHandle(db db.DB, url string) error {
 		return errors.New("Must only contain numbers, english letters or symbols: -,_")
 	}
 
-	_, err := db.GetLink(url)
+	_, err := mainDb.GetLink(url)
 	if err == nil {
 		return errors.New("Handle is already taken")
 	}

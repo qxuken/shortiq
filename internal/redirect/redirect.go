@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/golang-lru/v2"
+	lru "github.com/hashicorp/golang-lru/v2"
 	mdb "github.com/qxuken/short/internal/db"
 )
 
-func logRedirect(db mdb.DB, r *http.Request) {
+func logRedirect(auxDb mdb.AuxiliaryDB, r *http.Request) {
 	short := r.PathValue("short")
 	country := r.Header.Get("CF-IPCountry")
 	referer := r.Header.Get("Referer")
@@ -24,10 +24,10 @@ func logRedirect(db mdb.DB, r *http.Request) {
 	}
 	ts := time.Now().Unix()
 
-	db.LogVisit(mdb.AnalyticsItem{ShortUrl: short, Country: country, Referer: referer, Ip: ip, Ts: ts})
+	auxDb.LogVisit(mdb.AnalyticsItem{ShortUrl: short, Country: country, Referer: referer, Ip: ip, Ts: ts})
 }
 
-func RedirectRoute(db mdb.DB) func(w http.ResponseWriter, r *http.Request) {
+func RedirectRoute(mainDb mdb.MainDb, auxDb mdb.AuxiliaryDB) func(w http.ResponseWriter, r *http.Request) {
 	cache, err := lru.New[string, string](512)
 	if err != nil {
 		log.Fatal(err)
@@ -36,7 +36,7 @@ func RedirectRoute(db mdb.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		short := r.PathValue("short")
 
-		defer logRedirect(db, r)
+		defer logRedirect(auxDb, r)
 
 		url, ok := cache.Get(short)
 		if ok {
@@ -44,7 +44,7 @@ func RedirectRoute(db mdb.DB) func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		url, err := db.GetLink(short)
+		url, err := mainDb.GetLink(short)
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):

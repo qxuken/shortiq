@@ -18,24 +18,24 @@ import (
 
 	"github.com/qxuken/short/internal/auth"
 	"github.com/qxuken/short/internal/config"
-	dbModule "github.com/qxuken/short/internal/db"
+	mdb "github.com/qxuken/short/internal/db"
 	"github.com/qxuken/short/internal/shortener"
 	"github.com/qxuken/short/internal/validator"
 	"github.com/qxuken/short/web/template/component"
 	"github.com/qxuken/short/web/template/page"
 )
 
-func WebRouter(conf *config.Config, db dbModule.DB) func(chi.Router) {
+func WebRouter(conf *config.Config, mainDb mdb.MainDb, auxDb mdb.AuxiliaryDB) func(chi.Router) {
 	return func(r chi.Router) {
 		workDir, _ := os.Getwd()
 		filesDir := http.Dir(filepath.Join(workDir, "./assets"))
 		fileServer(r, "/assets", filesDir)
 
-		r.Group(pages(conf, db))
+		r.Group(pages(conf, mainDb, auxDb))
 	}
 }
 
-func pages(conf *config.Config, db dbModule.DB) func(chi.Router) {
+func pages(conf *config.Config, mainDb mdb.MainDb, auxDb mdb.AuxiliaryDB) func(chi.Router) {
 	return func(r chi.Router) {
 
 		r.Use(func(next http.Handler) http.Handler {
@@ -57,12 +57,12 @@ func pages(conf *config.Config, db dbModule.DB) func(chi.Router) {
 		r.Use(auth.CokieAuthMiddleware(conf))
 		r.Use(csrf.Protect(conf.AppSecret, csrf.ErrorHandler(templ.Handler(page.CSRFError()))))
 
-		r.Group(authorizedRouter(conf, db))
+		r.Group(authorizedRouter(conf, mainDb, auxDb))
 		r.Group(unauthorizedRouter(conf))
 	}
 }
 
-func authorizedRouter(conf *config.Config, db dbModule.DB) func(chi.Router) {
+func authorizedRouter(conf *config.Config, mainDb mdb.MainDb, auxDb mdb.AuxiliaryDB) func(chi.Router) {
 	return func(r chi.Router) {
 		r.Use(authorizedOnly)
 
@@ -86,9 +86,9 @@ func authorizedRouter(conf *config.Config, db dbModule.DB) func(chi.Router) {
 			st := timing.NewMetric("creating_or_validating_short_url").Start()
 			var shortErr error
 			if shortType == "custom" {
-				shortErr = validator.ValidateShortHandle(db, short)
+				shortErr = validator.ValidateShortHandle(mainDb, short)
 			} else if urlErr == nil {
-				short, shortErr = shortener.ShortUrlChecked(db, conf.HandleLen)
+				short, shortErr = shortener.ShortUrlChecked(mainDb, conf.HandleLen)
 			}
 			st.Stop()
 
@@ -113,7 +113,7 @@ func authorizedRouter(conf *config.Config, db dbModule.DB) func(chi.Router) {
 			}
 
 			dt := timing.NewMetric("save").Start()
-			err := db.SetLink(url, short)
+			err := mainDb.SetLink(url, short)
 			dt.Stop()
 
 			if err != nil {
@@ -122,9 +122,9 @@ func authorizedRouter(conf *config.Config, db dbModule.DB) func(chi.Router) {
 			}
 
 			fullShort := fmt.Sprintf("%v/u/%v", conf.PublicUrlStr, short)
-			statsShort := "/s/" + short
+			statsShort := "/stats/" + short
 			w.Header().Add("HX-Push-Url", statsShort)
-			templ.Handler(component.LinkStats(templ.SafeURL(fullShort), "Your link is ready")).ServeHTTP(w, r)
+			templ.Handler(component.LinkStats(templ.SafeURL(fullShort), short, "Your link is ready")).ServeHTTP(w, r)
 		})
 
 		r.Post("/f/generated", func(w http.ResponseWriter, r *http.Request) {
@@ -204,7 +204,7 @@ func authorizedRouter(conf *config.Config, db dbModule.DB) func(chi.Router) {
 			et.Stop()
 
 			vt := timing.NewMetric("validate_values").Start()
-			err := validator.ValidateShortHandle(db, short)
+			err := validator.ValidateShortHandle(mainDb, short)
 			var errStr string
 			if err != nil {
 				errStr = err.Error()
@@ -216,15 +216,84 @@ func authorizedRouter(conf *config.Config, db dbModule.DB) func(chi.Router) {
 			templ.Handler(component.ShortUrlInput(errStr)).ServeHTTP(w, r)
 		})
 
-		r.Get("/s/{short_url}", func(w http.ResponseWriter, r *http.Request) {
+		r.Get("/stats", func(w http.ResponseWriter, r *http.Request) {
+			timing := servertiming.FromContext(r.Context())
+
+			dt := timing.NewMetric("fetch_stats").Start()
+			trackingTotals, err := auxDb.GetTrackingTotals()
+			dt.Stop()
+
+			links, _ := mainDb.GetLinks()
+			trafficStats, _ := auxDb.GetAllLinksTrafficStats()
+
+			var topCountries []mdb.CountryStats
+			var topReferers []mdb.RefererStats
+			var dailyClicks []mdb.DailyStats
+
+			if err == nil {
+				topCountries, _ = auxDb.GetAllCountryStats()
+				topReferers, _ = auxDb.GetAllRefererStats()
+				dailyClicks, _ = auxDb.GetAllDailyClicks(30)
+			}
+
+			trafficMap := make(map[string]mdb.LinkTrafficStats, len(trafficStats))
+			for _, ts := range trafficStats {
+				trafficMap[ts.ShortUrl] = ts
+			}
+
+			perLinkStats := make([]page.LinkStatsData, 0, len(links))
+			for _, link := range links {
+				ts := trafficMap[link.ShortUrl]
+				countryStats, _ := auxDb.GetCountryStats(link.ShortUrl)
+				refererStats, _ := auxDb.GetRefererStats(link.ShortUrl)
+				daily, _ := auxDb.GetDailyClicks(link.ShortUrl, 30)
+
+				perLinkStats = append(perLinkStats, page.LinkStatsData{
+					ShortUrl:       link.ShortUrl,
+					RedirectUrl:    link.RedirectUrl,
+					TotalClicks:    ts.TotalClicks,
+					UniqueVisitors: ts.UniqueVisitors,
+					TopCountries:   countryStats,
+					TopReferers:    refererStats,
+					DailyClicks:    daily,
+				})
+			}
+
+			var totalLinks int
+			var totalClicks, uniqueVisitors int
+			totalLinks = len(links)
+			if trackingTotals != nil {
+				totalClicks = trackingTotals.TotalClicks
+				uniqueVisitors = trackingTotals.UniqueVisitors
+			}
+
+			c := page.AllStats(totalLinks, totalClicks, uniqueVisitors, topCountries, topReferers, dailyClicks, perLinkStats)
+			templ.Handler(c).ServeHTTP(w, r)
+		})
+
+		r.Get("/stats/{short_url}", func(w http.ResponseWriter, r *http.Request) {
 			timing := servertiming.FromContext(r.Context())
 
 			st := timing.NewMetric("extract_url").Start()
 			short := r.PathValue("short_url")
 			st.Stop()
 
+			dt := timing.NewMetric("fetch_stats").Start()
+			stats, _ := auxDb.GetLinkStats(short)
+			redirectUrl, _ := mainDb.GetLink(short)
+			topCountries, _ := auxDb.GetCountryStats(short)
+			topReferers, _ := auxDb.GetRefererStats(short)
+			dailyClicks, _ := auxDb.GetDailyClicks(short, 30)
+			dt.Stop()
+
+			var totalClicks, uniqueVisitors int
+			if stats != nil {
+				totalClicks = stats.TotalClicks
+				uniqueVisitors = stats.UniqueVisitors
+			}
+
 			fullShort := fmt.Sprintf("%v/u/%v", conf.PublicUrlStr, short)
-			c := page.Stats(templ.SafeURL(fullShort), "")
+			c := page.StatsPage(templ.SafeURL(fullShort), short, redirectUrl, totalClicks, uniqueVisitors, topCountries, topReferers, dailyClicks)
 			templ.Handler(c).ServeHTTP(w, r)
 		})
 	}
@@ -247,9 +316,14 @@ func unauthorizedRouter(conf *config.Config) func(chi.Router) {
 			ut.Stop()
 
 			if ok && tokenValidationErr == nil {
+				jwtToken, err := auth.IssueJWT(conf)
+				if err != nil {
+					templ.Handler(page.ServerError()).ServeHTTP(w, r)
+					return
+				}
 				cookie := http.Cookie{
 					Name:     "authToken",
-					Value:    token,
+					Value:    jwtToken,
 					Path:     "/",
 					MaxAge:   3600,
 					HttpOnly: true,
