@@ -1,8 +1,8 @@
 package component
 
 templ htmxScript() {
-	<script defer src="/assets/htmx.1.9.12.min.js"></script>
-	if  ctx.Value("app.conf.verbose").(bool) {
+	<script defer src="/assets/htmx.2.0.8.min.js"></script>
+	if ctx.Value("app.conf.verbose").(bool) {
 		<script>
 			document.addEventListener('DOMContentLoaded', () => htmx.logAll());
 		</script>
@@ -21,7 +21,7 @@ templ htmlTemplate(title string) {
 			<link rel="stylesheet" href="/assets/styles.css"/>
 			<link rel="preload" href="/assets/jost/Jost-VariableFont.ttf" as="font" crossorigin="anonymous"/>
 		</head>
-		<body hx-boost="true">
+		<body hx-boost="true" hx-target="body" hx-swap="outerHTML">
 			{ children... }
 			@htmxScript()
 		</body>

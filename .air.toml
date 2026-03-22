@@ -1,11 +1,13 @@
 root = "."
 testdata_dir = "testdata"
 tmp_dir = "tmp"
+env_files = ["example.env"]
 
 [build]
-args_bin = []
+pre_cmd = ["npm run build", "go tool templ generate"]
+cmd = "go build -o ./tmp/short.exe ./cmd/short/main.go"
 bin = "./tmp/short.exe"
-cmd = "npm run build && templ generate && go build -o ./tmp/short.exe ./cmd/short/main.go"
+entrypoint = ["./tmp/short.exe"]
 delay = 1000
 exclude_dir = [".git", "node_modules", "assets", "tmp", "vendor", "testdata"]
 exclude_file = []
@@ -20,8 +22,6 @@ kill_delay = "0s"
 log = "build-errors.log"
 poll = false
 poll_interval = 0
-post_cmd = []
-pre_cmd = []
 rerun = false
 rerun_delay = 500
 send_interrupt = false
@@ -42,6 +42,7 @@ time = false
 clean_on_exit = false
 
 [proxy]
+# To enable app should support feature toggle for csrf
 enabled = false
 proxy_port = 8090
 app_port = 8080

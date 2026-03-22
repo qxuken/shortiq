@@ -25,7 +25,7 @@ templ AuthFormActions() {
 }
 
 templ AuthForm(tokenErr string) {
-	<form id="admin-token" class="shortiq-form" hx-post="/login" hx-swap="outerHTML">
+	<form id="admin-token" class="shortiq-form" hx-post="/login" hx-target="this" hx-swap="outerHTML">
 		@CSRF()
 		@AdminTokenInput(tokenErr)
 		@AuthFormActions()

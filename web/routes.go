@@ -59,7 +59,6 @@ func pages(conf *config.Config, db dbModule.DB) func(chi.Router) {
 
 		r.Group(authorizedRouter(conf, db))
 		r.Group(unauthorizedRouter(conf))
-
 	}
 }
 
@@ -149,8 +148,6 @@ func authorizedRouter(conf *config.Config, db dbModule.DB) func(chi.Router) {
 
 			c := component.CreateLink(conf.PublicUrlStr, "generated", urlErrStr, "")
 			templ.Handler(c).ServeHTTP(w, r)
-			return
-
 		})
 		r.Post("/f/custom", func(w http.ResponseWriter, r *http.Request) {
 			timing := servertiming.FromContext(r.Context())
@@ -173,8 +170,6 @@ func authorizedRouter(conf *config.Config, db dbModule.DB) func(chi.Router) {
 
 			c := component.CreateLink(conf.PublicUrlStr, "custom", urlErrStr, "")
 			templ.Handler(c).ServeHTTP(w, r)
-			return
-
 		})
 
 		r.Post("/f/redirect_url", func(w http.ResponseWriter, r *http.Request) {
@@ -273,7 +268,6 @@ func unauthorizedRouter(conf *config.Config) func(chi.Router) {
 
 			c := component.AuthForm("Invalid token")
 			templ.Handler(c).ServeHTTP(w, r)
-			return
 		})
 	}
 }
