@@ -19,10 +19,9 @@ RUN npm run build
 
 # ---
 
-FROM golang:1.25-alpine AS backend-base
+FROM golang:1.26-alpine AS backend-base
 
 RUN apk add build-base
-RUN go install github.com/a-h/templ/cmd/templ@latest
 
 FROM backend-base AS backend-builder
 
@@ -30,7 +29,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN templ generate
+RUN go tool templ generate
 
 RUN CGO_ENABLED=1 GOOS=linux go build -o /app/short_web ./cmd/short/main.go
 
